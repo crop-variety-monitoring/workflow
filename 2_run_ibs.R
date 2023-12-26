@@ -10,32 +10,16 @@ if (this == "LAPTOP-IVSPBGCA") {
 }
 
 setwd(path)
-
-ff <- list.files(pattern="IBS.csv$", recursive=TRUE)
-
+ff <- list.files("input", pattern="SNP.csv$", recursive=TRUE, full=TRUE)
+markers <- matchpoint::marker_positions("")
 for (dart_file in ff) {
 	print(dart_file)
-	info_file <- gsub("IBS.csv$", "info.csv", dart_file)
-
-	outdir = gsub("input", "output/new_IBS", dirname(dart_file))
-	dir.create(outdir, FALSE, TRUE)
-	pref = gsub(".csv$", "", basename(dart_file))
-			
-	out = matchpoint:::dart_IBS(dart_file, info_file, 
-		# SNP minor allele frequency >= 0.05
-		MAF_cutoff=0.05, 
-		# missing rate 0.9 is loose, 0.2 is stringent
-		SNP_Missing_Rate=0.2, 
-		Ref_Missing_Rate=0.2,
-		Sample_Missing_Rate=0.2, 
-		# exclude genotypes based on their heterozygosity rate
-		Ref_Heterozygosity_Rate = 0.1,
-		Sample_Heterozygosity_Rate=0.1,
-		IBS_cutoff=0.5,
-		outdir = outdir, out_prefix=pref, 
-		Inb_method = "mom.visscher",
-		cpus=1
-	)
+	snps <- matchpoint::read_dart(dart_file)
+	genotype_file <- gsub("SNP.csv$", "genotype-info.csv", dart_file)
+	genotypes <- data.frame(data.table::fread(genotype_file))
+	filename <- file.path(gsub("input", "output/IBS", dirname(dart_file)), snps$order)
+	out <- matchpoint::match_IBS(snps$snp, genotypes, markers, filename=filename, threads=4)
 }
 
-#MAF_cutoff=0.05; SNP_Missing_Rate=0.2; Ref_Missing_Rate=0.2; Sample_Missing_Rate=0.2; Ref_Heterozygosity_Rate = 0.1; Sample_Heterozygosity_Rate=0.1; IBS_cutoff=0.7; out_prefix=pref; Inb_method = "mom.visscher"; cpus=1; verbose=FALSE
+#MAF_cutoff=0.05; SNP_Missing_Rate=0.2; Ref_Missing_Rate=0.2; Sample_Missing_Rate=0.2; Ref_Heterozygosity_Rate = 0.1; Sample_Heterozygosity_Rate=0.1; IBS_cutoff=0.7; Inb_method = "mom.visscher"; threads=1; verbose=FALSE; filename=""
+
