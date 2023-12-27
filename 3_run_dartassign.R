@@ -10,13 +10,15 @@ if (this == "LAPTOP-IVSPBGCA") {
 }
 setwd(path)
 
-ff <- list.files("input", pattern="SNP.csv$", recursive=TRUE, full=TRUE)
-markers <- matchpoint::marker_positions("")
-for (dart_file in ff) {
+ff <- list.files("input", pattern="SNP_Counts.csv$", recursive=TRUE, full=TRUE)
+
+counts_file = ff = ff[3]
+
+for (counts_file in ff) {
 	print(dart_file)
-	snps <- matchpoint::read_dart(dart_file)
-	genofile <- gsub("SNP.csv$", "genotype-info.csv", dart_file)
-	genotypes <- data.frame(data.table::fread(genofile))
+	info.file <- gsub("SNP_Counts.csv$", "genotype-info.csv", dart_file)
+	x = runSampleAnalysis(counts.file, info.file)
+
 	filename <- file.path(gsub("input", "output/IBS", dirname(dart_file)), snps$order)
 	out <- matchpoint::match_IBS(snps$snp, genotypes, markers, filename=filename, threads=4)
 }
