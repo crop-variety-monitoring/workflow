@@ -19,9 +19,10 @@ ff <- ff[!grepl("DEra22-7523", ff)]
 ff = ff[1]
 for (counts.file in ff) {
 	ordnr <- gsub("_Counts.csv", "", basename(counts.file))
-	filename <- file.path(gsub("input", "output/DartAssign", dirname(counts.file)), ordnr)
+	filename <- file.path(gsub("input", "output/DAP", 
+			paste0(dirname(counts.file)), ordnr), "_DAP")
 	print(counts.file)
-	#if (file.exists(paste0(filename, ".rds"))) next
+	if (file.exists(paste0(filename, ".rds"))) next
 	dir.create(dirname(filename), FALSE, TRUE)
 
 	info.file <- gsub("Counts.csv$", "variety-info.csv", counts.file)
