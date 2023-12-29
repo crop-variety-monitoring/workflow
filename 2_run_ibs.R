@@ -1,13 +1,15 @@
 
-path <- "."
 this <- system("hostname", TRUE)
 if (this == "LAPTOP-IVSPBGCA") { 
 	path <- "G:/.shortcut-targets-by-id/1mfeEftF_LgRcxOT98CBIaBbYN4ZHkBr_/share/image"
+} else if (grepl("farm.hpc.ucdavis.edu", host)) {
+	path <- "."
 } else if (this == "DESKTOP-M2BA7AA") {
 	path <- "google drive path"
-#} else if (host == "???") {
+} #else if (host == "???") {
 #   path <- "c:/mypath"
-}
+#}
+
 setwd(path)
 
 ff <- list.files("input", pattern="SNP.csv$", recursive=TRUE, full=TRUE)
