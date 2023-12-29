@@ -8,30 +8,43 @@ if (this == "LAPTOP-IVSPBGCA") {
 setwd(path)
 
 
-ff <- list.files("input", pattern="Counts.csv$", recursive=TRUE, full=TRUE)
-eth <- ff[grep("ETH", ff)]
+fdart <- list.files("output/DartAssign", pattern="xlsx$", recursive=TRUE, full=TRUE)
+fdart <- fdart[!grepl("~", fdart)]
+fibs <-  list.files("output/IBS", pattern="xlsx$", recursive=TRUE, full=TRUE)
+fibs <- fibs[gsub("_IBS", "", basename(fibs)) %in% basename(fdart)]
 
-#f = eth[2]
-#do = matchpoint::read_dart(f)
-#d = matchpoint:::dart_make_unique_ids(do)
-#identical(do, d)
-#fout = gsub(".csv", "_fixed.csv", f)
-#matchpoint:::write_dart(d, fout)
+#for (i in 1:length(fdart)) {
+i=3
+fd <- fdart[i]
+fi <- fibs[i]
+da <- readxl::read_excel(fd, "res_full")
+ib <- readxl::read_excel(fi, "IBS")
 
-ff <- ff[-grep("ETH", ff)]
-counts_file <- ff[6]
+d <- merge(ib, da, by=c("field_id", "ref_id"))
 
-#for (counts_file in ff) {
+dd <- d[d$rank.y <= 5, ]
+cor(dd$IBS, dd$Probability)
+cor(dd$rank.x, dd$rank.y, method = "spearman")
 
-	ordnr <- strsplit(basename(counts_file), "_")[[1]][1]
-	filename <- file.path(gsub("input", "output/DartAssign", dirname(counts_file)), ordnr)
-	dir.create(dirname(filename), FALSE, TRUE)
-	print(counts_file)
-	info.file <- gsub("Counts.csv$", "variety-info.csv", counts_file)
-	info <- matchpoint:::assign_info(info.file)
-	x <- dartVarietalID::runSampleAnalysis(counts_file, info, pop.size=10)
 
-	saveRDS(x, paste0(filename, ".rds"))
-	matchpoint:::assign_write_excel(x, info, filename)
+plot(d$IBS, d$Probability, cex=.1)
+par(mfrow=c(1, 2))
+i <- d$rank.x == 1
+boxplot(d$rank.y[i])
+j <- d$rank.y == 1
+boxplot(d$rank.x[j])
 
+
+f = "C:/github/brian/IMAGE/data/ibs/Tanzania_Rice_matches.xlsx"
+f = "C:/github/brian/IMAGE/data/ibs/Nigeria_Rice_matches.xlsx"
+
+old <- readxl::read_excel(f, "IBS_cutoff_0.7_all_match")
+old$field_id = gsub("DRi23-7955_", "", old$field_id)
+old$ref_id = gsub("DRi23-7955_", "", old$ref_id)
+
+dd <- merge(ib, old, by=c("field_id", "ref_id"))
+plot(IBS.y ~ IBS.x, data=dd, cex=.1)
+
+
+	
 #}

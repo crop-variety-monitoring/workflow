@@ -21,7 +21,8 @@ for (fxls in ff) {
 	labs <- h$labels[h$order]
 #	j <- match(r$ref_id, labs)
 	j <- match(labs, r$ref_id)
-	variety <- paste0(r$variety, " (", r$ref_id, ")")[j]
+	variety <- r$variety[j]
+	variety2 <- paste0(r$variety, " (", r$ref_id, ")")[j]
 	set.seed(1)
 	rc <- sample(rainbow(length(unique(variety))))
 	cols <- rep(NA, length(variety))
@@ -36,7 +37,7 @@ for (fxls in ff) {
 	png(fname, width, 1000, pointsize=15)
 	par(mar=c(10, 2.5, 2, 1))
 	hc = plot(h, hang=-1, main=main, sub="", xlab="", labels=FALSE)
-	text((1:length(labs))+.25, rep(0, length(labs)), variety, col=cols, xpd=T, srt=90, pos=2)
+	text((1:length(labs))+.25, rep(0, length(labs)), variety2, col=cols, xpd=T, srt=90, pos=2)
 	dev.off()
 
 }

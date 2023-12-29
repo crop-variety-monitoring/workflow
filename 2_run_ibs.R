@@ -13,7 +13,6 @@ if (this == "LAPTOP-IVSPBGCA") {
 setwd(path)
 
 ff <- list.files("input", pattern="SNP.csv$", recursive=TRUE, full=TRUE)
-
 markers <- matchpoint::marker_positions("")
 for (dart_file in ff) {
 	print(dart_file)
