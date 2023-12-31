@@ -86,13 +86,13 @@ k <- lapply(1:length(i), \(p) {
 
 <div class = "row">
 <div class = "col-md-5">
-```{r tab1}
+```{r tab1a}
 cap <- paste0("varieties (", olabs[1] ,")")
 kableExtra::kbl(k[[1]], caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
 ```
 </div>
 <div class = "col-md-5">
-```{r tab2}
+```{r tab2a}
 cap <- paste0("varieties (", olabs[2] ,")")
 kableExtra::kbl(k[[2]], caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
 ```
@@ -101,7 +101,7 @@ kableExtra::kbl(k[[2]], caption=cap) |> kableExtra::kable_classic(full_width = F
 
 Best matches for IBS>0.7 and DAP>0.5 
 
-```{r matches_tab2}
+```{r prep_matches_tab2}
 i <- lapply(ibs1, \(x) {
   x <- as.data.frame(table(x$variety[x$IBS >0.7]))
   colnames(x) <- c("variety", "IBS")
@@ -116,18 +116,89 @@ j <- lapply(dap1, \(x) {
 k <- lapply(1:length(i), \(p) {
     m <- merge(i[[p]], j[[p]], by="variety", all=TRUE)
     m[is.na(m)] <- 0
-    cap <- paste0("varieties (", olabs[p] ,")")
-    knitr::kable(m, caption=cap) |> 
-          kableExtra::kable_styling(full_width = FALSE)
-      })
+    m[rev(order(m$IBS)), ]
+})
 ```
+
+
+<div class = "row">
+<div class = "col-md-5">
+```{r tab1b}
+cap <- paste0("varieties (", olabs[1] ,")")
+kableExtra::kbl(k[[1]], caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+```
+</div>
+<div class = "col-md-5">
+```{r tab2b}
+cap <- paste0("varieties (", olabs[2] ,")")
+kableExtra::kbl(k[[2]], caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+```
+</div></div>
+
+
+## Agreement and Confusion
+
+```{r pre_confusion}
+q <- lapply(d1, \(x) {
+    f <- as.data.frame(table(x$variety.x, x$variety.y))
+    colnames(f) <- c("IBS", "DAP", "n")
+    f <- f[rev(order(f$n)), ]
+    f[,1] <- as.character(f[,1])
+    f[,2] <- as.character(f[,2])
+    rownames(f) <- NULL
+    f
+})
+```
+
+For which varieties is there most agreement?
+
+<div class = "row">
+<div class = "col-md-6">
+```{r tab3a}
+qq <- q[[1]]
+qq <- qq[qq[,1] == qq[,2], ]
+cap <- paste0("varieties (", olabs[1] ,")")
+kableExtra::kbl(qq, caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+```
+</div>
+<div class = "col-md-5">
+```{r tab4a}
+qq <- q[[2]]
+qq <- qq[qq[,1] == qq[,2], ]
+cap <- paste0("varieties (", olabs[2] ,")")
+kableExtra::kbl(qq, caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+```
+</div></div>
+
+
+
+For what varieties is there most confusing?
+
+
+<div class = "row">
+<div class = "col-md-6">
+```{r tab3b}
+qq <- q[[1]]
+qq <- qq[qq[,1] != qq[,2], ]
+cap <- paste0("varieties (", olabs[1] ,")")
+kableExtra::kbl(qq, caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+```
+</div>
+<div class = "col-md-5">
+```{r tab4b}
+qq <- q[[2]]
+qq <- qq[qq[,1] != qq[,2], ]
+cap <- paste0("varieties (", olabs[2] ,")")
+kableExtra::kbl(qq, caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+```
+</div></div>
 
 
 ## Comparing the best matches
 
 What is the fraction of the field samples where both methods assign the same reference variety?
 
-```{r matchall}
+```{r match_all}
 maketab <- function(tabs) {
   tabs <- do.call(rbind, tabs)
   tabs <- round(tabs / rowSums(tabs), 2)
@@ -142,7 +213,7 @@ lapply(d1, \(x) table(x$variety.x == x$variety.y)) |> maketab()
 
 How many of the matches match; only considering good matches (IBS > 0.7)?
 
-```{r matchhigh}
+```{r match_high}
 lapply(d1, \(x) { x <- x[x$IBS > .7, ]; 
           table(x$variety.x == x$variety.y) }) |> maketab()
 
