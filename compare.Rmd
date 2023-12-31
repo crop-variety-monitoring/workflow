@@ -41,6 +41,8 @@ dap <- lapply(fdap, \(f) {
 })
 
 orders <- gsub("_IBS.xlsx", "", basename(fibs))
+onms <- matchpoint:::order_names()
+olabs <- onms$cc[match(orders, onms$name)]
 
 get1 <- function(x) {
   x <- x[x$var_rank == 1, ]
@@ -58,26 +60,92 @@ d1 <- lapply(1:length(dap), \(i) merge(ibs1[[i]], dap1[[i]], by="field_id"))
 
 So far, we have two matching methods: IBS and DAP. Here we compare the results obtained with these methods. Right now we can compare the data for `r length(orders)` orders.
 
+## Matches 
+
+Best matches 
+
+```{r prep_matches_tab1}
+i <- lapply(ibs1, \(x) {
+  x <- as.data.frame(table(x$variety))
+  colnames(x) <- c("variety", "IBS")
+  x
+})
+j <- lapply(dap1, \(x) {
+  x <- as.data.frame(table(x$variety))
+  colnames(x) <- c("variety", "DAP")
+  x
+})
+
+k <- lapply(1:length(i), \(p) {
+    m <- merge(i[[p]], j[[p]], by="variety", all=TRUE)
+    m[is.na(m)] <- 0
+    m[rev(order(m$IBS)), ]
+})
+```
+
+
+<div class = "row">
+<div class = "col-md-5">
+```{r tab1}
+cap <- paste0("varieties (", olabs[1] ,")")
+kableExtra::kbl(k[[1]], caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+```
+</div>
+<div class = "col-md-5">
+```{r tab2}
+cap <- paste0("varieties (", olabs[2] ,")")
+kableExtra::kbl(k[[2]], caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+```
+</div></div>
+
+
+Best matches for IBS>0.7 and DAP>0.5 
+
+```{r matches_tab2}
+i <- lapply(ibs1, \(x) {
+  x <- as.data.frame(table(x$variety[x$IBS >0.7]))
+  colnames(x) <- c("variety", "IBS")
+  x
+})
+j <- lapply(dap1, \(x) {
+  x <- as.data.frame(table(x$variety[x$Probability>0.5]))
+  colnames(x) <- c("variety", "DAP")
+  x
+})
+
+k <- lapply(1:length(i), \(p) {
+    m <- merge(i[[p]], j[[p]], by="variety", all=TRUE)
+    m[is.na(m)] <- 0
+    cap <- paste0("varieties (", olabs[p] ,")")
+    knitr::kable(m, caption=cap) |> 
+          kableExtra::kable_styling(full_width = FALSE)
+      })
+```
+
+
 ## Comparing the best matches
 
-How many of the matches match?
+What is the fraction of the field samples where both methods assign the same reference variety?
 
 ```{r matchall}
-tabs <- lapply(d1, \(x) table(x$variety.x == x$variety.y))
-tabs <- do.call(rbind, tabs)
-rownames(tabs) <- orders
-knitr::kable(tabs, caption="(Dis-) agreement") |> kableExtra::kable_styling(full_width = FALSE)
+maketab <- function(tabs) {
+  tabs <- do.call(rbind, tabs)
+  tabs <- round(tabs / rowSums(tabs), 2)
+  rownames(tabs) <- olabs
+  colnames(tabs) <- c("no", "yes")[as.logical(colnames(tabs)) + 1]
+  knitr::kable(tabs, caption="(Dis-) agreement") |> 
+    kableExtra::kable_styling(full_width = FALSE)
+}
+lapply(d1, \(x) table(x$variety.x == x$variety.y)) |> maketab()
 
 ```
 
 How many of the matches match; only considering good matches (IBS > 0.7)?
 
 ```{r matchhigh}
-tabs <- lapply(d1, \(x) { x <- x[x$IBS > .7, ]; 
-                  table(x$variety.x == x$variety.y) })
-tabs <- do.call(rbind, tabs)
-rownames(tabs) <- orders
-knitr::kable(tabs, caption="(Dis-) agreement") |> kableExtra::kable_styling(full_width = FALSE)
+lapply(d1, \(x) { x <- x[x$IBS > .7, ]; 
+          table(x$variety.x == x$variety.y) }) |> maketab()
+
 ```
 
 What is the rank in one method, for the best match in another method?
@@ -107,59 +175,24 @@ for (i in 1:n) {
 ```
 
 
+What is the correlation between all values?
 
+```{r cor, fig.width=12, fig.height=12}
+par(mfrow=c(2, 2), mar=c(4, 4, 3, 1))
+s <- sapply(1:length(d), \(i) {
+ x <- d[[i]]
 
-cor(d$IBS, d$Probability, use="pairwise.complete.obs")
-cor(d$rank.x, d$rank.y, method = "spearman", use="pairwise.complete.obs")
+ plot(x$IBS, x$Probability, cex=.25, main=olabs[i], xlab="IBS", ylab="DAP", las=1, col=rgb(1, 0, 0, .25))
+ 
+ plot(x$var_rank.x, x$var_rank.y, cex=.25, main=olabs[i], xlab="IBS rank", ylab="DAP rank", las=1, col=rgb(0, 0, 1, .25))
+ 
+ c(cor(x$IBS, x$Probability, use="pairwise.complete.obs"),
+ cor(x$var_rank.x, x$var_rank.y, method = "spearman",
+       use="pairwise.complete.obs")) })
+rownames(s) <- olabs
+colnames(s) <- c("cor", "rank-cor")
+knitr::kable(s, caption="Correlation") |> 
+    kableExtra::kable_styling(full_width = FALSE)
 
-dd <- d[d$rank.y <= 5 & d$rank.x <= 5, ]
-cor(dd$IBS, dd$Probability, use="pairwise.complete.obs")
-cor(dd$rank.x, dd$rank.y, method = "spearman", use="pairwise.complete.obs")
+```
 
-plot(d$IBS, d$Probability, cex=.1)
-
-par(mfrow=c(1, 2))
-
-i <- d$rank.x == 1
-boxplot(d$rank.y[i])
-j <- d$rank.y == 1
-boxplot(d$rank.x[j])
-
-i = d$rank.x < 5 | d$rank.y < 5
-cor(d$IBS[i], d$Probability[i])
-
-plot(d$rank.x[i], d$rank.y[i], cex=.1)
-
-
-f = "C:/github/brian/IMAGE/data/ibs/Tanzania_Rice_matches.xlsx"
-f = "C:/github/brian/IMAGE/data/ibs/Nigeria_Rice_matches.xlsx"
-
-old <- readxl::read_excel(f, "IBS_cutoff_0.7_all_match")
-old$field_id = gsub("DRi23-7955_", "", old$field_id)
-old$ref_id = gsub("DRi23-7955_", "", old$ref_id)
-
-dd <- merge(ib, old, by=c("field_id", "ref_id"))
-plot(IBS.y ~ IBS.x, data=dd, cex=.1)
-
-
-
-
-f = "c:/Users/rhijm/Downloads/res.csv"
-x = read.csv(f)
-a = x[,1:3]
-b = x[,c(1, 4:5)]
-m = merge(a, b, by=1:2)
-plot(m[,3:4])
-	
-#}
-
-f = "C:/github/brian/IMAGE/data/raw/snp/Tanzania/DArTPipelineData/rice_multi_match.csv"
-do = read.csv(f)
-i <- with(do, ave(Probability, SampleID, FUN=\(x) rank(1000 - x)))
-do = do[i==1, ]
-z <- merge(do, d, by=c("field_id", "ref_id"))
-
-
-da1 = da1[order(da1[,1]), ]
-
-d = d[order(d$field_Tid), ]
