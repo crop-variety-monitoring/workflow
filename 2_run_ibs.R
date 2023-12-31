@@ -14,12 +14,13 @@ setwd(path)
 
 ff <- list.files("input", pattern="SNP.csv$", recursive=TRUE, full=TRUE)
 markers <- matchpoint::marker_positions("")
-for (dart_file in ff) {
-	print(dart_file)
-	snps <- matchpoint::read_dart(dart_file)
-	genofile <- gsub("SNP.csv$", "variety-info.csv", dart_file)
+
+for (f in ff) {
+	print(f)
+	snps <- matchpoint::read_dart(f)
+	genofile <- gsub("SNP.csv$", "variety-info.csv", f)
 	genotypes <- data.frame(data.table::fread(genofile))
-	filename <- file.path(gsub("input", "output/IBS", dirname(dart_file)), snps$order)
+	filename <- file.path(gsub("input", "output/IBS", dirname(f)), snps$order)
 	out <- matchpoint::match_IBS(snps$snp, genotypes, markers, filename=filename, threads=4)
 }
 
