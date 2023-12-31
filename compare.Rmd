@@ -106,3 +106,60 @@ for (i in 1:n) {
 
 ```
 
+
+
+
+cor(d$IBS, d$Probability, use="pairwise.complete.obs")
+cor(d$rank.x, d$rank.y, method = "spearman", use="pairwise.complete.obs")
+
+dd <- d[d$rank.y <= 5 & d$rank.x <= 5, ]
+cor(dd$IBS, dd$Probability, use="pairwise.complete.obs")
+cor(dd$rank.x, dd$rank.y, method = "spearman", use="pairwise.complete.obs")
+
+plot(d$IBS, d$Probability, cex=.1)
+
+par(mfrow=c(1, 2))
+
+i <- d$rank.x == 1
+boxplot(d$rank.y[i])
+j <- d$rank.y == 1
+boxplot(d$rank.x[j])
+
+i = d$rank.x < 5 | d$rank.y < 5
+cor(d$IBS[i], d$Probability[i])
+
+plot(d$rank.x[i], d$rank.y[i], cex=.1)
+
+
+f = "C:/github/brian/IMAGE/data/ibs/Tanzania_Rice_matches.xlsx"
+f = "C:/github/brian/IMAGE/data/ibs/Nigeria_Rice_matches.xlsx"
+
+old <- readxl::read_excel(f, "IBS_cutoff_0.7_all_match")
+old$field_id = gsub("DRi23-7955_", "", old$field_id)
+old$ref_id = gsub("DRi23-7955_", "", old$ref_id)
+
+dd <- merge(ib, old, by=c("field_id", "ref_id"))
+plot(IBS.y ~ IBS.x, data=dd, cex=.1)
+
+
+
+
+f = "c:/Users/rhijm/Downloads/res.csv"
+x = read.csv(f)
+a = x[,1:3]
+b = x[,c(1, 4:5)]
+m = merge(a, b, by=1:2)
+plot(m[,3:4])
+	
+#}
+
+f = "C:/github/brian/IMAGE/data/raw/snp/Tanzania/DArTPipelineData/rice_multi_match.csv"
+do = read.csv(f)
+i <- with(do, ave(Probability, SampleID, FUN=\(x) rank(1000 - x)))
+do = do[i==1, ]
+z <- merge(do, d, by=c("field_id", "ref_id"))
+
+
+da1 = da1[order(da1[,1]), ]
+
+d = d[order(d$field_Tid), ]
