@@ -1,6 +1,7 @@
 *.Rproj
 .DS_Store
 *.md
+/figure
 
 # History files
 .Rhistory
