@@ -28,6 +28,7 @@ fdap <- fdap[!grepl("~", fdap)]
 fdap <- fdap[!grepl("ETH", fdap)]
 
 fibs <- gsub("DAP", "IBS", fdap)
+fhab <- gsub("DAP", "HAM", fdap)
 
 ibs <- lapply(fibs, \(f) readxl::read_excel(f, "IBS_variety") |> data.frame())
 dap <- lapply(fdap, \(f) {
@@ -39,6 +40,8 @@ dap <- lapply(fdap, \(f) {
     }
     x
 })
+ham <- lapply(fham, \(f) readxl::read_excel(f, "HAM_variety") |> data.frame())
+
 
 orders <- gsub("_IBS.xlsx", "", basename(fibs))
 onms <- matchpoint:::order_names()
@@ -221,14 +224,14 @@ lapply(d1, \(x) { x <- x[x$IBS > .7, ];
 
 What is the rank in one method, for the best match in another method?
 
-```{r pressure, echo=FALSE, fig.with=12}
+```{r pressure, fig.with=16}
 rank_plot <- function(z, add=FALSE, main="") {
 	M = c("IBS", "DAP")
 	#z$var_rank[is.na(z$var_rank)] <- max(z$var_rank, na.rm=TRUE)
 	z <- na.omit(z)
 	if (add) {
 		lines(sort(z$var_rank), (1:nrow(z))/nrow(z), lwd=2, col="red")	
-		legend("bottomright", legend=paste(rev(M), "#1, ranked by", M), col=c("blue", "red"), lwd=2)
+		legend("bottomright", legend=paste(rev(M), "#1, ranked by", M), col=c("blue", "red"), lwd=2, cex=.75)
 	} else {
 		plot(sort(z$var_rank), (1:nrow(z))/nrow(z), xlab="Rank by other algorithm", 
 			ylab="fraction of samples", las=1, type="l", lwd=2, col="blue", main=main)
@@ -239,7 +242,7 @@ par(mfrow=c(1, n))
 for (i in 1:n) {
    z1 <- merge(dap1[[i]], ibs[[i]], by=c("field_id", "variety"), all.x=TRUE)
    z2 <- merge(ibs1[[i]], dap[[i]], by=c("field_id", "variety"), all.x=TRUE)
-   rank_plot(z1, main=gsub("_IBS.xlsx", "", orders[i]))
+   rank_plot(z1, main=olabs[i])
    rank_plot(z2, TRUE)
 }
 

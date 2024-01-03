@@ -18,10 +18,9 @@ markers <- matchpoint::marker_positions("")
 for (f in ff) {
 	print(f)
 	snps <- matchpoint::read_dart(f)
-	genofile <- gsub("SNP.csv$", "variety-info.csv", f)
-	genotypes <- data.frame(data.table::fread(genofile))
+	genotypes <- gsub("SNP.csv$", "variety-info.csv", f) |> data.table::fread() |> data.frame()
 	filename <- file.path(gsub("input", "output/IBS", dirname(f)), snps$order)
-	out <- matchpoint::match_IBS(snps$snp, genotypes, markers, filename=filename, threads=4)
+	out <- matchpoint::match_IBS(snps, genotypes, markers, filename=filename, threads=4)
 }
 
 #MAF_cutoff=0.05; SNP_Missing_Rate=0.2; Ref_Missing_Rate=0.2; Sample_Missing_Rate=0.2; Ref_Heterozygosity_Rate = 0.1; Sample_Heterozygosity_Rate=0.1; IBS_cutoff=0.5; Inb_method = "mom.visscher"; threads=1; verbose=FALSE; filename=""
