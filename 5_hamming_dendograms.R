@@ -18,7 +18,9 @@ for (f in ff) {
 	x <- matchpoint::read_dart(f)
 	genofile <- gsub("SNP_2row.csv$", "variety-info.csv", f)
 	g <- data.frame(data.table::fread(genofile))
-	d <- matchpoint:::hamming_distance(x, g)
+
+	ref <- x$snp[, colnames(x$snp) %in% g$sample[g$reference]]
+	d <- matchpoint:::hamming_distance(ref)
 
 	h <- hclust(as.dist(d))
 	labs <- h$labels[h$order]
@@ -34,7 +36,6 @@ for (f in ff) {
 	fname <- gsub("_SNP_2row.csv", "", gsub("input/", "", f))
 	fname <- gsub("/", "_", fname)
 	fname <- file.path("results/img", paste0(fname, "_ref-ham.png"))
-
 	width <- 250 * round(nrow(d)/10)
 
 	png(fname, width, 1000, pointsize=15)
