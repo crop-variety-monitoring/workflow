@@ -1,5 +1,5 @@
 ---
-title: "Describe SNP data"
+title: Ethiopia/teff
 date: "Compiled on `r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
@@ -11,7 +11,7 @@ editor_options:
 
 
 ```{r setup, include=FALSE}
-order <- "DEra22-7523_1_moreOrders"
+order <- 'DEra22-7523_1_moreOrders'
 knitr::opts_chunk$set(echo = TRUE)
 
 this <- system("hostname", TRUE)
@@ -43,8 +43,8 @@ stopifnot(length(f1) == 1)
 f2 <- gsub("_SNP.csv$", "_SNP_2row.csv", f1)
 
 dirn <- dirname(f1)
-country <- substr(dirn, nchar(dirn)-2, nchar(dirn))
-crop <- substr(order, 2, 3)
+country <- 'Ethiopia'
+crop <- 'teff'
 
 inf <- read.csv(gsub("SNP", "variety-info", f1))
 x <- matchpoint::read_dart(f1)

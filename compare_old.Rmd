@@ -73,6 +73,41 @@ So far, we have two matching methods: IBS and DAP. Here we compare the results o
 
 ## Matches 
 
+Best matches 
+
+```{r prep_matches_tab1}
+i <- lapply(ibs1, \(x) {
+  x <- as.data.frame(table(x$variety))
+  colnames(x) <- c("variety", "IBS")
+  x
+})
+j <- lapply(dap1, \(x) {
+  x <- as.data.frame(table(x$variety))
+  colnames(x) <- c("variety", "DAP")
+  x
+})
+
+k <- lapply(1:length(i), \(p) {
+    m <- merge(i[[p]], j[[p]], by="variety", all=TRUE)
+    m[is.na(m)] <- 0
+    m[rev(order(m$IBS)), ]
+})
+```
+
+
+<div class = "row">
+<div class = "col-md-5">
+```{r tab1a}
+scrolltab(k[[1]], paste0("varieties (", olabs[1] ,")"))
+```
+</div>
+<div class = "col-md-5">
+```{r tab2a}
+scrolltab(k[[2]], paste0("varieties (", olabs[2] ,")"))
+```
+</div></div>
+
+
 Best matches for IBS>0.8 and DAP>0.5 
 
 ```{r prep_matches_tab2}
@@ -106,6 +141,7 @@ scrolltab(k[[1]], paste0("varieties (", olabs[1] ,")"))
 scrolltab(k[[2]], paste0("varieties (", olabs[2] ,")"))
 ```
 </div></div>
+
 
 ## Agreement and Confusion
 
