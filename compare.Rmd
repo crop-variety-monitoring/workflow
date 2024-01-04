@@ -73,7 +73,7 @@ So far, we have two matching methods: IBS and DAP. Here we compare the results o
 
 ## Distribution of best match scores 
 
-```{r match_scores, fig.width=8, fig.height=4}
+```{r match_scores, fig.width=8, fig.height=4.5}
 par(mfrow=c(1, 2))
 for (i in 1:2) {
 x <- (1:nrow(d1[[i]]))/nrow(d1[[i]])
@@ -109,7 +109,7 @@ lapply(d1, \(x) { x <- x[x$IBS >= .8, ];
 
 Given match of a field sample to a reference sample in one method; what is the rank of that reference sample in other methods? (only for IBS >= 0.8)
 
-```{r pressure, fig.width=12, fig.height=5}
+```{r pressure, fig.width=8, fig.height=4}
 rank_plot <- function(z, add=FALSE, main="") {
 	M = c("IBS", "DAP")
 	#z$var_rank[is.na(z$var_rank)] <- max(z$var_rank, na.rm=TRUE)
@@ -148,7 +148,7 @@ for (i in 1:n) {
 
 What is the correlation between all values (only for IBS >= 0.8)?
 
-```{r cor, fig.width=10, fig.height=10}
+```{r cor, fig.width=8, fig.height=8}
 par(mfrow=c(2, 2), mar=c(4, 4, 3, 1))
 s <- sapply(1:length(d), \(i) {
  x <- d[[i]]
@@ -176,7 +176,7 @@ knitr::kable(s, caption="Correlation") |>
 
 Correlation by IBS cut-off
 
-```{r varcor, fig.width=9, fig.height=4}
+```{r varcor, fig.width=8, fig.height=3.5}
 coffs <- seq(0.5, 0.95, .05)
 s <- lapply(1:length(d), \(i) {
  x <- d[[i]]
@@ -195,7 +195,7 @@ for (i in 1:2) {
         xlab="IBS cut-off", 
        ylab="correlation IBS & DAP",
        ylim=c(floor(min(s[[i]] * 10))/10, 1),
-       col="blue", pch=20, type="b")
+       col="blue", pch=20, type="b", las=1)
   lines(coffs, s[[i]][,2], type="b", col="red")
 
   if (i == 1) {
@@ -211,7 +211,7 @@ for (i in 1:2) {
 
 Each dot is the number of calls for a reference variety by either method. The line is *y=x* (where you would want the dots to be).
 
-```{r besties, fig.width=9, fig.height=4}
+```{r besties, fig.width=8, fig.height=4.5}
 i <- lapply(ibs1, \(x) {
   x <- as.data.frame(table(x$variety[x$IBS >0.8]))
   colnames(x) <- c("variety", "IBS")
