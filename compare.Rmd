@@ -19,6 +19,14 @@ if (this == "LAPTOP-IVSPBGCA") {
 } else if (this == "DESKTOP-M2BA7AA") {
 	dpath <- "google drive path"
 }
+
+scrolltab <- function(data, caption) {
+kableExtra::kbl(data, caption=caption) |>
+    kableExtra::kable_classic(full_width = F,  position = "right") |>
+    kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> 
+    kableExtra::scroll_box(width = "100%", height = "400px")
+}
+
 ```
 
 
@@ -28,7 +36,7 @@ fdap <- fdap[!grepl("~", fdap)]
 fdap <- fdap[!grepl("ETH", fdap)]
 
 fibs <- gsub("DAP", "IBS", fdap)
-fhab <- gsub("DAP", "HAM", fdap)
+#fham <- gsub("DAP", "HAM", fdap)
 
 ibs <- lapply(fibs, \(f) readxl::read_excel(f, "IBS_variety") |> data.frame())
 dap <- lapply(fdap, \(f) {
@@ -40,7 +48,7 @@ dap <- lapply(fdap, \(f) {
     }
     x
 })
-ham <- lapply(fham, \(f) readxl::read_excel(f, "HAM_variety") |> data.frame())
+#ham <- lapply(fham, \(f) readxl::read_excel(f, "HAM_variety") |> data.frame())
 
 
 orders <- gsub("_IBS.xlsx", "", basename(fibs))
@@ -90,23 +98,21 @@ k <- lapply(1:length(i), \(p) {
 <div class = "row">
 <div class = "col-md-5">
 ```{r tab1a}
-cap <- paste0("varieties (", olabs[1] ,")")
-kableExtra::kbl(k[[1]], caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+scrolltab(k[[1]], paste0("varieties (", olabs[1] ,")"))
 ```
 </div>
 <div class = "col-md-5">
 ```{r tab2a}
-cap <- paste0("varieties (", olabs[2] ,")")
-kableExtra::kbl(k[[2]], caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+scrolltab(k[[2]], paste0("varieties (", olabs[2] ,")"))
 ```
 </div></div>
 
 
-Best matches for IBS>0.7 and DAP>0.5 
+Best matches for IBS>0.8 and DAP>0.5 
 
 ```{r prep_matches_tab2}
 i <- lapply(ibs1, \(x) {
-  x <- as.data.frame(table(x$variety[x$IBS >0.7]))
+  x <- as.data.frame(table(x$variety[x$IBS >0.8]))
   colnames(x) <- c("variety", "IBS")
   x
 })
@@ -127,14 +133,12 @@ k <- lapply(1:length(i), \(p) {
 <div class = "row">
 <div class = "col-md-5">
 ```{r tab1b}
-cap <- paste0("varieties (", olabs[1] ,")")
-kableExtra::kbl(k[[1]], caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+scrolltab(k[[1]], paste0("varieties (", olabs[1] ,")"))
 ```
 </div>
 <div class = "col-md-5">
 ```{r tab2b}
-cap <- paste0("varieties (", olabs[2] ,")")
-kableExtra::kbl(k[[2]], caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+scrolltab(k[[2]], paste0("varieties (", olabs[2] ,")"))
 ```
 </div></div>
 
@@ -160,16 +164,14 @@ For which varieties is there most agreement?
 ```{r tab3a}
 qq <- q[[1]]
 qq <- qq[qq[,1] == qq[,2], ]
-cap <- paste0("varieties (", olabs[1] ,")")
-kableExtra::kbl(qq, caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+scrolltab(qq, paste0("varieties (", olabs[1] ,")"))
 ```
 </div>
 <div class = "col-md-5">
 ```{r tab4a}
 qq <- q[[2]]
 qq <- qq[qq[,1] == qq[,2], ]
-cap <- paste0("varieties (", olabs[2] ,")")
-kableExtra::kbl(qq, caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+scrolltab(qq, paste0("varieties (", olabs[2] ,")"))
 ```
 </div></div>
 
@@ -183,16 +185,14 @@ For what varieties is there most confusing?
 ```{r tab3b}
 qq <- q[[1]]
 qq <- qq[qq[,1] != qq[,2], ]
-cap <- paste0("varieties (", olabs[1] ,")")
-kableExtra::kbl(qq, caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+scrolltab(qq, paste0("varieties (", olabs[1] ,")"))
 ```
 </div>
 <div class = "col-md-5">
 ```{r tab4b}
 qq <- q[[2]]
 qq <- qq[qq[,1] != qq[,2], ]
-cap <- paste0("varieties (", olabs[2] ,")")
-kableExtra::kbl(qq, caption=cap) |> kableExtra::kable_classic(full_width = F,  position = "right") |> kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> kableExtra::scroll_box(width = "100%", height = "400px")
+scrolltab(qq, paste0("varieties (", olabs[2] ,")"))
 ```
 </div></div>
 

@@ -15,18 +15,14 @@ setwd(path)
 ff <- list.files("input", pattern="SNP_2row.csv$", recursive=TRUE, full=TRUE)
 dir.create("output/HAM", FALSE, TRUE)
 
-ff = ff[3]
+#ff = ff[3]
 for (f in ff) {
 	print(f)
 	snps <- matchpoint::read_dart(f)
 	genotypes <- gsub("SNP_2row.csv$", "variety-info.csv", f) |> 
 						data.table::fread() |> data.frame()
 	filename <- file.path(gsub("input", "output/HAM", dirname(f)), snps$order)
-
-	filename = ""
-	system.time(out <- matchpoint::match_distance(snps, genotypes, missing_rate=0.2, filename=filename))
+	print(system.time(out <- matchpoint::match_distance(snps, genotypes, missing_rate=0.2, filename=filename)))
 }
 
-
 #x=snps; compare="ref2fld";  missing_rate=0.25;  filename="";  verbose=TRUE
-

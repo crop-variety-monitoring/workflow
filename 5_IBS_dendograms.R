@@ -29,17 +29,15 @@ for (fxls in ff) {
 	ref <- as.integer(as.factor(variety))
 	cols <- rc[ref]
 	main <- gsub("_IBS.xlsx", "", gsub("output/", "", fxls))
-	fname <- gsub("_IBS.xlsx", "", fxls)
 
-	fname <- paste0(fname, "_ref_ddgram.png")
+	fname <- gsub("_IBS.xlsx", "", basename(fxls))
+	fname <- file.path("results/img", paste0(fname, "_dendo_ref_IBS.png"))
 	width <- 250 * round(nrow(dr)/10)
-
 	png(fname, width, 1000, pointsize=15)
 	par(mar=c(10, 2.5, 2, 1))
 	hc = plot(h, hang=-1, main=main, sub="", xlab="", labels=FALSE)
 	text((1:length(labs))+.25, rep(0, length(labs)), variety2, col=cols, xpd=T, srt=90, pos=2)
 	dev.off()
-
 }
 
 
