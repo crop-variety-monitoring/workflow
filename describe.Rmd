@@ -88,6 +88,7 @@ grid()
 ```{r markvariation}
 i <- apply(snp, 1, \(i) length(na.omit(unique(i))))
 sd <- as.data.frame(table(i))
+sd[,1] <- as.integer(as.character(sd[,1]))
 sinf <- sd[sd[,1]==1, 2]
 if (length(sinf) == 0) sinf <- 0
 sinf <- nrow(snp) - sinf
@@ -98,7 +99,7 @@ ktab(sd2, "Variation across genotypes in SNP markers")
 ```
 
 </br>
-Of the `r nrow(x$snp)` remaining markers, `r sinf` (`r sinfp`%) were informative in the sense that they showed variation between genotypes. 
+Of the `r nrow(snp)` remaining markers, `r sinf` (`r sinfp`%) were informative in the sense that they showed variation between genotypes. 
 </br>
 
 ```{r genotypes, fig.width=5}
@@ -130,9 +131,11 @@ hits <- bm[k, 2]
 hits[!is.na(hits)] <- paste0(" [", hits[!is.na(hits)], "]")
 hits[is.na(hits)] <- ""
 variety <- inf$variety[j]
-#, "/", inf$inventory[j]
-variety2 <- paste0(inf$variety[j], " (", inf$sample[j], ") ", hits)
-
+if (any(is.na(inf$sample[j]))) {
+	variety2 <- paste0(variety, " (", inf$sample[j], " / ", inf$inventory[j],") ", hits)
+} else {
+	variety2 <- paste0(variety, " (", inf$sample[j], ") ", hits)
+}
 vars <- na.omit(inf$variety)
 vars <- vars[vars != ""]
 bm <- bm[rev(order(bm$Freq)), ]
@@ -162,7 +165,7 @@ scrolltab(bm, "Number of matched field samples by reference variety")
 </div></div>
 
 
-Below is a dendrogram based on the Hamming distance and complete linkage clustering. The unit distance is the number of mutations that separate each reference. The labels are formatted as follows: `variety (sample-id) [number of IBS matches]`
+Below is a dendrogram based on the Hamming distance and complete linkage clustering. The unit distance is the number of mutations that separate each reference. The labels are formatted as follows: `variety (sample_ID / inventory_ID) [number of IBS matches]` or `variety (sample_ID) [number of IBS matches]` if there was no inventory_ID.
 
 ```{r plotdendo1, fig.width=6, fig.height=sum(sref)/10}
 set.seed(1)
@@ -174,8 +177,8 @@ dc <- as.dendrogram(hc)
 dc <- dendextend::set(dc, "labels", variety2)
 dc <- dendextend::set(dc, "labels_cex", 0.5)
 dc <- dendextend::set(dc, "labels_col", cols)
-par(mar=c(4, 1, 1, 10))
-plot(dc, horiz=TRUE, nodePar=list(cex=.1))
+par(mar=c(3, 1, 0, 10))
+plot(dc, horiz=TRUE, nodePar=list(cex=.1), cex=.6)
 ```
 
 
@@ -194,9 +197,9 @@ v <- 100*v/nrow(snp)
 
 ```
 
-The median average Hamming distance between samples of the same variety is `r round(median(v), 2)`% mutations (the number of mutations relative to the number of usable SNPs in the assay). This is before correcting the reference for any obvious inconsistencies.
+The median average Hamming distance between samples of the same variety is `r round(median(v), 1)`% mutations (the number of mutations relative to the number of usable SNPs in the assay). This is before correcting the reference for any obvious inconsistencies.
 
-```{r bplot, fig.width=4, fig.height=4}
+```{r bplot, fig.width=3, fig.height=3.5}
 par(mar=c(4, 6, 1, 0))
 boxplot(v, ylab="Dissimilarity within varieties\n(% mutations)", las=1)
 ```

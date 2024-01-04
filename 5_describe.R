@@ -20,6 +20,7 @@ crpi <- grep("crop <- ", rmd)
 cnti <- grep("country <- ", rmd)
 
 for (i in 1:nrow(ords)) {
+	print(ords$cc[i])
 	outf <- paste0(ords$country[i], "_", ords$crop[i], ".html")
 	rmd[titi] <- paste0("title: ", ords$cc[i])
 	rmd[ordi] <- paste0("order <- '", ords$name[i], "'")
