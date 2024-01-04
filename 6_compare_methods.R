@@ -8,8 +8,8 @@ if (this == "LAPTOP-IVSPBGCA") {
 }
 setwd(file.path(gitpath, "workflow"))
 
-dout <- file.path(path, "results")
+dout <- file.path(path, "results/html")
 dir.create(dout, FALSE, FALSE)
 
-rmarkdown::render("compare.Rmd", "html_document")
+#rmarkdown::render("compare.Rmd", "html_document")
 file.copy("compare.html", file.path(dout, "compare.html"), overwrite=TRUE)

@@ -87,19 +87,20 @@ grid()
 
 ```{r markvariation}
 i <- apply(snp, 1, \(i) length(na.omit(unique(i))))
+nrow1 <- nrow(snp)
+snp <- snp[i>1,]
+
 sd <- as.data.frame(table(i))
 sd[,1] <- as.integer(as.character(sd[,1]))
-sinf <- sd[sd[,1]==1, 2]
-if (length(sinf) == 0) sinf <- 0
-sinf <- nrow(snp) - sinf
-sinfp <- round(100 * sinf / nrow(snp), 1)
+sinf <- ifelse(nrow(snp) < nrow1, paste(nrow(snp), "of the "), "All the ")
+sinfp <- round(100 * nrow(snp) / nrow(x$snp), 1)
 Markers <- c("No variation", "Two variants found", "Three variants found")[sd[,1]]
 sd2 <- data.frame(Markers, Count=sd$Freq)
 ktab(sd2, "Variation across genotypes in SNP markers")
 ```
 
 </br>
-Of the `r nrow(snp)` remaining markers, `r sinf` (`r sinfp`%) were informative in the sense that they showed variation between genotypes. 
+`r sinf` remaining markers were informative in the sense that they showed variation between genotypes leaving us with (`r sinfp`% ) of the original number of markers. 
 </br>
 
 ```{r genotypes, fig.width=5}
@@ -109,12 +110,13 @@ snp <- snp[, mrg <= 0.2]
 m <- match(colnames(snp), inf$sample)
 nref <- sum(inf$reference[m])
 nfld <- sum(!inf$reference[m])
-
 sref <- colnames(x2$snp) %in% inf$sample[inf$reference]
+
+mgs <- ifelse(mg == 0, "No", mg)
 ```
 
 </br>
-`r mg` genotypes (`r mgp`%) had a missing rate that was higher than 0.2. After removing these, we have `r ncol(snp)` genotypes left (`r nref` references and `r nfld` field samples).
+`r mgs` genotypes (`r mgp`%) had a missing rate that was higher than 0.2. After removing these, we have `r ncol(snp)` genotypes left (`r nref` references and `r nfld` field samples).
 
 ### Reference sample
 

@@ -71,18 +71,154 @@ d1 <- lapply(1:length(dap), \(i) merge(ibs1[[i]], dap1[[i]], by="field_id"))
 
 So far, we have two matching methods: IBS and DAP. Here we compare the results obtained with these methods. Right now we can compare the data for `r length(orders)` orders.
 
-## Matches 
+## Distribution of best match scores 
 
-Best matches for IBS>0.8 and DAP>0.5 
+```{r match_scores, fig.width=8, fig.height=4}
+par(mfrow=c(1, 2))
+for (i in 1:2) {
+x <- (1:nrow(d1[[i]]))/nrow(d1[[i]])
+plot(x, sort(d1[[i]]$IBS), xlab="Fraction of samples", ylab="score", las=1, ylim=c(0.5, 1), type="l", lwd=2, col="blue", main=olabs[i])
+grid()
+lines(x, sort(d1[[i]]$Probability), col="red", lwd=2)
+if (i==1) {
+  legend("topleft", legend=c("IBS", "DAP"), lwd=2, col=c("blue", "red"), cex=.9)
+}
+}
 
-```{r prep_matches_tab2}
+
+```
+
+## Comparing the best matches
+
+What is the fraction of the field samples where both methods assign the same reference variety? Only considering cases with (IBS >= 0.8)?
+
+```{r match_high}
+maketab <- function(tabs) {
+  tabs <- do.call(rbind, tabs)
+  tabs <- round(tabs / rowSums(tabs), 2)
+  rownames(tabs) <- olabs
+  colnames(tabs) <- c("different", "same")[as.logical(colnames(tabs)) + 1]
+  knitr::kable(tabs, caption="") |> 
+    kableExtra::kable_styling(full_width = FALSE)
+}
+
+lapply(d1, \(x) { x <- x[x$IBS >= .8, ]; 
+          table(x$variety.x == x$variety.y) }) |> maketab()
+
+```
+
+Given match of a field sample to a reference sample in one method; what is the rank of that reference sample in other methods? (only for IBS >= 0.8)
+
+```{r pressure, fig.width=12, fig.height=5}
+rank_plot <- function(z, add=FALSE, main="") {
+	M = c("IBS", "DAP")
+	#z$var_rank[is.na(z$var_rank)] <- max(z$var_rank, na.rm=TRUE)
+	z <- na.omit(z)
+	if (add) {
+		lines(sort(z$var_rank), (1:nrow(z))/nrow(z), lwd=2, col="red")
+		legend("bottomright", legend=paste(rev(M), "#1, ranked by", M),
+		       col=c("blue", "red"), lwd=c(4,2), cex=.75)
+	} else {
+		plot(sort(z$var_rank), (1:nrow(z))/nrow(z), 
+		     xlab="Rank by other algorithm", 
+			   ylab="fraction of samples", axes=FALSE,
+			   xlim=c(0, 10), yaxs="i", xaxs="i",
+			   las=1, type="l", lwd=4, col="blue", main=main)
+	   axis(1, 0:10)
+	   axis(2, (0:10)/10, las=1)
+	   grid(10,10)
+	  grid()
+	}
+}
+n <- length(dap1)
+par(mfrow=c(1, n))
+for (i in 1:n) {
+   ib <- ibs[[i]]
+   ib <- ib[ib$IBS >= 0.8, ]
+   ib1 <- ibs1[[i]]
+   ib1 <- ib1[ib1$IBS >= 0.8, ]
+   z1 <- merge(dap1[[i]], ib, by=c("field_id", "variety"), all.x=TRUE)
+   z2 <- merge(ib1, dap[[i]], by=c("field_id", "variety"), all.x=TRUE)
+   rank_plot(z1, main=olabs[i])
+   rank_plot(z2, TRUE)
+}
+
+```
+
+
+What is the correlation between all values (only for IBS >= 0.8)?
+
+```{r cor, fig.width=10, fig.height=10}
+par(mfrow=c(2, 2), mar=c(4, 4, 3, 1))
+s <- sapply(1:length(d), \(i) {
+ x <- d[[i]]
+ x <- x[x$IBS >= 0.8, ]  
+ plot(x$IBS, x$Probability, cex=1.5, main=olabs[i], xlab="IBS",
+      ylab="DAP", las=1, col=rgb(1, 0, 0, .25), pch=20)
+ 
+ plot(x$var_rank.x, x$var_rank.y, cex=1.5, main=olabs[i], 
+      xlab="IBS rank", ylab="DAP rank", las=1, 
+      col=rgb(0, 0, 1, .25), pch=20)
+ 
+ c(cor(x$IBS, x$Probability, use="pairwise.complete.obs"),
+ cor(x$var_rank.x, x$var_rank.y, method = "spearman",
+       use="pairwise.complete.obs")) 
+ })
+
+rownames(s) <- olabs
+colnames(s) <- c("cor", "rank-cor")
+s <- round(s, 3)
+knitr::kable(s, caption="Correlation") |> 
+    kableExtra::kable_styling(full_width = FALSE)
+
+```
+
+
+Correlation by IBS cut-off
+
+```{r varcor, fig.width=9, fig.height=4}
+coffs <- seq(0.5, 0.95, .05)
+s <- lapply(1:length(d), \(i) {
+ x <- d[[i]]
+ sapply(1:length(coffs), \(j) {
+    x <- x[x$IBS >= coffs[j], ]  
+    c(cor(x$IBS, x$Probability, use="pairwise.complete.obs"),
+    cor(x$var_rank.x, x$var_rank.y, method = "spearman",
+       use="pairwise.complete.obs")) 
+ }) |> t()
+})
+
+
+par(mfrow=c(1, 2), mar=c(4, 4, 3, 1))
+for (i in 1:2) {
+  plot(coffs, s[[i]][,1], main=olabs[i], 
+        xlab="IBS cut-off", 
+       ylab="correlation IBS & DAP",
+       ylim=c(floor(min(s[[i]] * 10))/10, 1),
+       col="blue", pch=20, type="b")
+  lines(coffs, s[[i]][,2], type="b", col="red")
+
+  if (i == 1) {
+		legend("bottomleft", 
+		       legend=c("IBS", "DAP"), lwd=2, 
+		       col=c("blue", "red"), cex=.75)
+  }
+}
+```
+
+
+## Varieties 
+
+Each dot is the number of calls for a reference variety by either method. The line is *y=x* (where you would want the dots to be).
+
+```{r besties, fig.width=9, fig.height=4}
 i <- lapply(ibs1, \(x) {
   x <- as.data.frame(table(x$variety[x$IBS >0.8]))
   colnames(x) <- c("variety", "IBS")
   x
 })
 j <- lapply(dap1, \(x) {
-  x <- as.data.frame(table(x$variety[x$Probability>0.5]))
+  x <- as.data.frame(table(x$variety))
   colnames(x) <- c("variety", "DAP")
   x
 })
@@ -92,145 +228,12 @@ k <- lapply(1:length(i), \(p) {
     m[is.na(m)] <- 0
     m[rev(order(m$IBS)), ]
 })
-```
 
-
-<div class = "row">
-<div class = "col-md-5">
-```{r tab1b}
-scrolltab(k[[1]], paste0("varieties (", olabs[1] ,")"))
-```
-</div>
-<div class = "col-md-5">
-```{r tab2b}
-scrolltab(k[[2]], paste0("varieties (", olabs[2] ,")"))
-```
-</div></div>
-
-## Agreement and Confusion
-
-```{r pre_confusion}
-q <- lapply(d1, \(x) {
-    f <- as.data.frame(table(x$variety.x, x$variety.y))
-    colnames(f) <- c("IBS", "DAP", "n")
-    f <- f[rev(order(f$n)), ]
-    f[,1] <- as.character(f[,1])
-    f[,2] <- as.character(f[,2])
-    rownames(f) <- NULL
-    f
-})
-```
-
-For which varieties is there most agreement?
-
-<div class = "row">
-<div class = "col-md-6">
-```{r tab3a}
-qq <- q[[1]]
-qq <- qq[qq[,1] == qq[,2], ]
-scrolltab(qq, paste0("varieties (", olabs[1] ,")"))
-```
-</div>
-<div class = "col-md-5">
-```{r tab4a}
-qq <- q[[2]]
-qq <- qq[qq[,1] == qq[,2], ]
-scrolltab(qq, paste0("varieties (", olabs[2] ,")"))
-```
-</div></div>
-
-
-
-For what varieties is there most confusing?
-
-
-<div class = "row">
-<div class = "col-md-6">
-```{r tab3b}
-qq <- q[[1]]
-qq <- qq[qq[,1] != qq[,2], ]
-scrolltab(qq, paste0("varieties (", olabs[1] ,")"))
-```
-</div>
-<div class = "col-md-5">
-```{r tab4b}
-qq <- q[[2]]
-qq <- qq[qq[,1] != qq[,2], ]
-scrolltab(qq, paste0("varieties (", olabs[2] ,")"))
-```
-</div></div>
-
-
-## Comparing the best matches
-
-What is the fraction of the field samples where both methods assign the same reference variety?
-
-```{r match_all}
-maketab <- function(tabs) {
-  tabs <- do.call(rbind, tabs)
-  tabs <- round(tabs / rowSums(tabs), 2)
-  rownames(tabs) <- olabs
-  colnames(tabs) <- c("no", "yes")[as.logical(colnames(tabs)) + 1]
-  knitr::kable(tabs, caption="(Dis-) agreement") |> 
-    kableExtra::kable_styling(full_width = FALSE)
+par(mfrow=c(ceiling(length(k)/2), 2))
+for (i in 1:2) {
+   plot(k[[i]][,-1], xlab="n (IBS)", ylab="n (DAP)", 
+        main=olabs[i], pch=20, col="orange", las=1)
+  abline(0,1)
 }
-lapply(d1, \(x) table(x$variety.x == x$variety.y)) |> maketab()
-
-```
-
-How many of the matches match; only considering good matches (IBS > 0.7)?
-
-```{r match_high}
-lapply(d1, \(x) { x <- x[x$IBS > .7, ]; 
-          table(x$variety.x == x$variety.y) }) |> maketab()
-
-```
-
-What is the rank in one method, for the best match in another method?
-
-```{r pressure, fig.with=16}
-rank_plot <- function(z, add=FALSE, main="") {
-	M = c("IBS", "DAP")
-	#z$var_rank[is.na(z$var_rank)] <- max(z$var_rank, na.rm=TRUE)
-	z <- na.omit(z)
-	if (add) {
-		lines(sort(z$var_rank), (1:nrow(z))/nrow(z), lwd=2, col="red")	
-		legend("bottomright", legend=paste(rev(M), "#1, ranked by", M), col=c("blue", "red"), lwd=2, cex=.75)
-	} else {
-		plot(sort(z$var_rank), (1:nrow(z))/nrow(z), xlab="Rank by other algorithm", 
-			ylab="fraction of samples", las=1, type="l", lwd=2, col="blue", main=main)
-	}
-}
-n <- length(dap1)
-par(mfrow=c(1, n))
-for (i in 1:n) {
-   z1 <- merge(dap1[[i]], ibs[[i]], by=c("field_id", "variety"), all.x=TRUE)
-   z2 <- merge(ibs1[[i]], dap[[i]], by=c("field_id", "variety"), all.x=TRUE)
-   rank_plot(z1, main=olabs[i])
-   rank_plot(z2, TRUE)
-}
-
-```
-
-
-What is the correlation between all values?
-
-```{r cor, fig.width=12, fig.height=12}
-par(mfrow=c(2, 2), mar=c(4, 4, 3, 1))
-s <- sapply(1:length(d), \(i) {
- x <- d[[i]]
-
- plot(x$IBS, x$Probability, cex=.25, main=olabs[i], xlab="IBS", ylab="DAP", las=1, col=rgb(1, 0, 0, .25))
- 
- plot(x$var_rank.x, x$var_rank.y, cex=.25, main=olabs[i], xlab="IBS rank", ylab="DAP rank", las=1, col=rgb(0, 0, 1, .25))
- 
- c(cor(x$IBS, x$Probability, use="pairwise.complete.obs"),
- cor(x$var_rank.x, x$var_rank.y, method = "spearman",
-       use="pairwise.complete.obs")) })
-rownames(s) <- olabs
-colnames(s) <- c("cor", "rank-cor")
-knitr::kable(s, caption="Correlation") |> 
-    kableExtra::kable_styling(full_width = FALSE)
-
 ```
 
