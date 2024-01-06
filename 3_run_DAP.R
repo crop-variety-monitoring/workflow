@@ -13,11 +13,11 @@ if (host == "LAPTOP-IVSPBGCA") {
 setwd(path)
 
 ff <- list.files("input", pattern="Counts.csv$", recursive=TRUE, full=TRUE)
-ff <- ff[c(6,10)]
 # skip teff for now. 
 #ff <- ff[!grepl("DEra22-7523", ff)]
 
-ff = ff[1]
+ff = ff[2]
+
 for (counts.file in ff) {
 	ordnr <- gsub("_Counts.csv", "", basename(counts.file))
 	filename <- file.path(gsub("input", "output/DAP", counts.file))
@@ -28,12 +28,19 @@ for (counts.file in ff) {
 	dir.create(dirname(filename), FALSE, TRUE)
 
 	info.file <- gsub("Counts.csv$", "variety-info.csv", counts.file)
-	info <- matchpoint:::assign_info(info.file)
+	info <- matchpoint:::DAP_info(info.file)
 	tmpfile <- paste0(tempfile(), ".csv")
 	write.csv(info, tmpfile, na="")
-	x <- dartVarietalID::runSampleAnalysis(counts.file, tmpfile, pop.size=10)
+
+	x <- dartVarietalID::runSampleAnalysis(counts.file,
+                         info.file = tmpfile,
+                         ncores = parallel::detectCores() - 1,
+                         pop.size = 10,
+                         dis.mat = TRUE,
+                         na.perc.threshold = 50)
+
 
 	saveRDS(x, paste0(filename, ".rds"))
-	matchpoint:::assign_write_excel(x, info, filename)
+	matchpoint:::DAP_write_excel(x, info, filename)
 }
 

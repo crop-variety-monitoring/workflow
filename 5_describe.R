@@ -13,11 +13,17 @@ dir.create(dout, FALSE, TRUE)
 
 rmd <- readLines("describe.Rmd")
 ords <- matchpoint:::order_names()
+ords <- ords[rev(order(ords$cc)), ]
+
+docache <- TRUE
 
 titi <- grep("title: ", rmd)
-ordi <- grep("order <- ", rmd)
+ordi <- grep("ordnr <- ", rmd)
 crpi <- grep("crop <- ", rmd)
 cnti <- grep("country <- ", rmd)
+
+caci <- grep("docache <-", rmd)
+rmd[caci] <- "docache <- FALSE"
 
 for (i in 1:nrow(ords)) {
 	print(ords$cc[i])
@@ -32,3 +38,4 @@ for (i in 1:nrow(ords)) {
 }
 
 file.remove("temp.Rmd")
+

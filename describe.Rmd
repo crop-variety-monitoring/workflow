@@ -11,7 +11,10 @@ editor_options:
 
 
 ```{r setup, include=FALSE}
-order <- "DCob22-7521_moreOrders"
+ordnr <- "DCas23-7954"
+docache <- TRUE
+crop <- substr(ordnr, 2, 3)
+
 knitr::opts_chunk$set(echo = TRUE)
 
 this <- system("hostname", TRUE)
@@ -28,7 +31,8 @@ ktab <- function(data, caption) {
 }
 
 scrolltab <- function(data, caption) {
-kableExtra::kbl(data, caption=caption) |>
+  rownames(data) <- NULL
+  kableExtra::kbl(data, caption=caption) |>
     kableExtra::kable_classic(full_width = F,  position = "right") |>
     kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> 
     kableExtra::scroll_box(width="100%", height="400px")
@@ -36,33 +40,35 @@ kableExtra::kbl(data, caption=caption) |>
 ```
 
 
-```{r fileread, include=FALSE, cache=FALSE}
+```{r fileread, include=FALSE, cache=docache}
 f1 <- list.files(file.path(dpath, "input"), 
-              pattern=paste0(order, "_SNP.csv"), recursive=TRUE, full=TRUE)
+              pattern=paste0(ordnr, "_SNP.csv"), recursive=TRUE, full=TRUE)
 stopifnot(length(f1) == 1)
 f2 <- gsub("_SNP.csv$", "_SNP_2row.csv", f1)
 fc <- gsub("_SNP.csv$", "_Counts.csv", f1)
 
 dirn <- dirname(f1)
 country <- substr(dirn, nchar(dirn)-2, nchar(dirn))
-crop <- substr(order, 2, 3)
 
 inf <- read.csv(gsub("SNP", "variety-info", f1))
 x <- matchpoint::read_dart(f1)
 x2 <- matchpoint::read_dart(f2)
 xc <- matchpoint::read_dart(fc)
 
+cns <- colnames(x$snp)[-1]
+
+stopifnot(all(colnames(x$snp)[-1] == colnames(x2$snp)[-(1:2)]))
+
 fxl <- gsub("_SNP.csv", "_IBS.xlsx", f1)
 fxl <- gsub("input", "output/IBS", fxl)
 dibs <- readxl::read_excel(fxl, "distance")
 bibs <- readxl::read_excel(fxl, "best_match") |> data.frame()
 bibs <- bibs[!is.na(bibs$field_id), ]
-#ribs <- readxl::read_excel(fxl, "ref")
 ```
 
 ### Introduction
 
-Describing order: `r order` for `r crop` in `r country`
+Describing order: `r ordnr` for `r crop` in `r country`
 
 The raw data had `r nrow(x$snp)` SNPs and `r ncol(x$snp)-1` samples (`r sum(inf$reference)` references and `r sum(!inf$reference)` field samples).  
 
@@ -112,7 +118,7 @@ snp <- snp[, mrg <= 0.2]
 m <- match(colnames(snp), inf$sample)
 nref <- sum(inf$reference[m])
 nfld <- sum(!inf$reference[m])
-sref <- colnames(x2$snp) %in% inf$sample[inf$reference]
+sref <- colnames(snp) %in% inf$sample[inf$reference]
 
 mgs <- ifelse(mg == 0, "No", mg)
 ```
@@ -122,11 +128,10 @@ mgs <- ifelse(mg == 0, "No", mg)
 
 ### Single genotype?
 
-In the case of clonally propagated or inbreeding species, one would expect that, if a sample consisted of a single genotype, the counts for each heterozygous SNP variant would have a proportion of 1. The "heterozygosity index" is the median score for all heterozygous markers of a variety. 
+In the case of clonally propagated or inbreeding species, one would expect that, if a sample consisted of a single genotype, the counts for each heterozygous SNP variant would have a proportion of 1. The "heterozygosity index" is the median score for all heterozygous markers of a variety. Since our samples consisted of 5 plants, I only SNP pairs with at least 5 counts in total, and with proportions of at least 0.2. Also, samples with less then 25 heterozygous markers are not considered.
 
-```{r purity, fig.width=4, fig.height=4}
+```{r purity, fig.width=4, fig.height=4, cache=docache}
 p <- as.matrix(xc$snp[,-(1:2)])
-colnames(p) = NULL
 i <- colSums(is.na(p)) < (0.2 * nrow(p))
 p <- p[,i]
 # not hetero
@@ -139,9 +144,9 @@ nv <- ncol(p1)
 out <- rep(NA, nv)
 for (i in 1:nv) {
     pi <- na.omit(cbind(p1[,i], p2[,i]))
-    if (nrow(pi) < 10) next
+    if (!(isTRUE(nrow(pi) > 25))) next
     pi <- pi[rowSums(pi)> 4, ]
-    if (nrow(pi) < 25) next
+    if (!(isTRUE(nrow(pi) > 25))) next
     pi <- apply(pi, 1, sort) |> t()
     s <- pi[,1] / pi[,2]
     # if s if very small it cannot be meaningful
@@ -165,8 +170,11 @@ grid()
 ```{r gatherref}
 ibs <- bibs[bibs$IBS > 0.8,]
 bm <- as.data.frame(table(ibs$ref_id))
+sref <- colnames(x2$snp) %in% inf$sample[inf$reference]
 ref <- x2$snp[, sref]
+ref <- matchpoint:::remove_sparse_records(ref)
 dst <- matchpoint:::hamming_distance(ref)
+#hc <- dendextend::find_dend(as.dist(dst))
 hc <- hclust(as.dist(dst))
 labs <- hc$labels[hc$order]
 j <- match(labs, inf$sample)
@@ -211,23 +219,9 @@ scrolltab(bm, "Number of matched field samples by reference variety")
 
 Below is a dendrogram based on the Hamming distance and complete linkage clustering. The unit distance is the number of mutations that separate each reference. The labels are formatted as follows: `variety (sample_ID / inventory_ID) [number of IBS matches]` or `variety (sample_ID) [number of IBS matches]` if there was no inventory_ID.
 
+The grey lines show the median, third quartile, `third quartile + 1.5 IQR` and maximum within variety distance, see below.)
+
 ```{r plotdendo1, fig.width=6, fig.height=sum(sref)/10}
-set.seed(1)
-rc <- sample(rainbow(length(unique(variety))))
-cols <- rep(NA, length(variety))
-ref <- as.integer(as.factor(variety))
-cols <- rc[ref]
-dc <- as.dendrogram(hc)
-dc <- dendextend::set(dc, "labels", variety2)
-dc <- dendextend::set(dc, "labels_cex", 0.5)
-dc <- dendextend::set(dc, "labels_col", cols)
-par(mar=c(3, 1, 0, 10))
-plot(dc, horiz=TRUE, nodePar=list(cex=.1), cex=.6)
-```
-
-
-
-```{r vard}
 diag(dst) <- NA
 jj <- match(colnames(dst), inf$sample)
 var <- inf$variety[jj]
@@ -237,14 +231,59 @@ v <- sapply(1:length(u), \(i) {
   dv <- dst[j, j]
   mean(dv, na.rm=TRUE)
 })
-v <- 100*v/nrow(snp)
+v[!is.finite(v)] <- 0
+set.seed(1)
+rc <- sample(rainbow(length(unique(variety))))
+cols <- rep(NA, length(variety))
+ref <- as.integer(as.factor(variety))
+cols <- rc[ref]
+dc <- as.dendrogram(hc)
+dc <- dendextend::set(dc, "labels", variety2)
+dc <- dendextend::set(dc, "labels_cex", 0.5)
+dc <- dendextend::set(dc, "labels_col", cols)
 
+qth <- quantile(v)
+iqr3 <- qth[4] + diff(qth[c(2,4)])
+
+par(mar=c(3, 1, 0, 10))
+plot(dendextend::highlight_branches(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6)
+lines(cbind(qth[2], c(0, length(variety))), col=gray(.5, alpha=.25), lwd=.5)
+lines(cbind(qth[3], c(0, length(variety))), col=gray(.5, alpha=.25), lwd=1)
+lines(cbind(qth[4], c(0, length(variety))), col=gray(0.25, alpha=.25), lwd=2)
+lines(cbind(iqr3, c(0, length(variety))), col=gray(0, alpha=.25), lwd=3)
+lines(cbind(qth[5], c(0, length(variety))), col=rgb(1,0,0,0.25), lwd=4)
 ```
+
 
 The median average Hamming distance between samples of the same variety is `r round(median(v), 1)`% mutations (the number of mutations relative to the number of usable SNPs in the assay). This is before correcting the reference for any obvious inconsistencies.
 
 ```{r bplot, fig.width=3, fig.height=3.5}
 par(mar=c(4, 6, 1, 0))
-boxplot(v, ylab="Dissimilarity within varieties\n(% mutations)", las=1)
+fv <- 100*v/nrow(snp)
+boxplot(fv, ylab="Dissimilarity within varieties\n(% mutations)", las=1)
+```
+
+
+## Trimming 
+
+```{r plotdendocln, fig.width=6, fig.height=sum(sref)/10}
+j <- match(colnames(dst), inf$sample)
+vars <- inf$variety[j]
+dcl <- matchpoint:::clean_dist_labels(dst, vars, iqr3, nmax=100, verbose=FALSE) 
+scrolltab(dcl[dcl$changed, c("sample", "from", "to")], "")
+
+j <- match(labs, dcl$sample)
+var1 <- dcl$to[j]
+var2 <- gsub(" \\*", "", var1)
+
+set.seed(1)
+rc <- sample(rainbow(length(unique(var2))))
+cols <- rep(NA, length(var2))
+cols <- rc[as.integer(as.factor(var2))]
+dc <- dendextend::set(dc, "labels", var1)
+dc <- dendextend::set(dc, "labels_col", cols)
+
+par(mar=c(3, 1, 0, 10))
+plot(dendextend::highlight_branches(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6)
 ```
 

@@ -33,11 +33,11 @@ kableExtra::kbl(data, caption=caption) |>
 ```{r fileread, include=FALSE, cache=TRUE}
 fdap <- list.files(file.path(dpath, "output/DAP"), pattern="xlsx$", recursive=TRUE, full=TRUE)
 fdap <- fdap[!grepl("~", fdap)]
-fdap <- fdap[!grepl("ETH", fdap)]
+fdap <- fdap[!grepl("DEra22", fdap)]
 
 fibs <- gsub("DAP", "IBS", fdap)
 #fham <- gsub("DAP", "HAM", fdap)
-
+file.exists(fibs)
 ibs <- lapply(fibs, \(f) readxl::read_excel(f, "IBS_variety") |> data.frame())
 dap <- lapply(fdap, \(f) {
     x <- readxl::read_excel(f, "res_full") |> data.frame()
@@ -49,7 +49,6 @@ dap <- lapply(fdap, \(f) {
     x
 })
 #ham <- lapply(fham, \(f) readxl::read_excel(f, "HAM_variety") |> data.frame())
-
 
 orders <- gsub("_IBS.xlsx", "", basename(fibs))
 onms <- matchpoint:::order_names()
@@ -69,23 +68,57 @@ d1 <- lapply(1:length(dap), \(i) merge(ibs1[[i]], dap1[[i]], by="field_id"))
 
 ## Introduction
 
-So far, we have two matching methods: IBS and DAP. Here we compare the results obtained with these methods. Right now we can compare the data for `r length(orders)` orders.
+Comparing the results obtained with IBS and DAP
+
+## Varieties 
+
+Each dot is the number of calls for a reference variety by either method. The blue line is *y=x*. That is where the dots would be if there were no matching differences between the two methods. 
+
+```{r besties, fig.width=12, fig.height=5}
+i <- lapply(ibs1, \(x) {
+  x <- as.data.frame(table(x$variety[x$IBS >0.8]))
+  colnames(x) <- c("variety", "IBS")
+  x
+})
+j <- lapply(dap1, \(x) {
+  x <- as.data.frame(table(x$variety))
+  colnames(x) <- c("variety", "DAP")
+  x
+})
+
+k <- lapply(1:length(i), \(p) {
+    m <- merge(i[[p]], j[[p]], by="variety", all=TRUE)
+    m[is.na(m)] <- 0
+    m[rev(order(m$IBS)), ]
+})
+
+par(mfrow=c(2, 5), mar=c(4,4,2,0))
+for (i in 1:length(k)) {
+   left <- i %in% c(1,6)
+   plot(k[[i]][,-1], xlab="n (IBS)", ylab=ifelse(left, "n (DAP)", ""), 
+        main=olabs[i], pch=20, col="orange", las=1, cex=2, xpd=TRUE)
+   grid()
+   abline(0,1, col="blue")
+}
+```
+
+
 
 ## Distribution of best match scores 
 
-```{r match_scores, fig.width=8, fig.height=4.5}
-par(mfrow=c(1, 2))
-for (i in 1:2) {
+```{r match_scores, fig.width=12, fig.height=5}
+par(mfrow=c(2, 5), mar=c(4,4,2,0))
+for (i in 1:length(d1)) {
 x <- (1:nrow(d1[[i]]))/nrow(d1[[i]])
-plot(x, sort(d1[[i]]$IBS), xlab="Fraction of samples", ylab="score", las=1, ylim=c(0.5, 1), type="l", lwd=2, col="blue", main=olabs[i])
+
+left <- i %in% c(1,6)
+plot(x, sort(d1[[i]]$IBS), xlab="Fraction of samples", ylab=ifelse(left, "score", ""), las=1, ylim=c(0.5, 1), type="l", lwd=2, col="blue", main=olabs[i])
 grid()
 lines(x, sort(d1[[i]]$Probability), col="red", lwd=2)
 if (i==1) {
   legend("topleft", legend=c("IBS", "DAP"), lwd=2, col=c("blue", "red"), cex=.9)
 }
 }
-
-
 ```
 
 ## Comparing the best matches
@@ -107,10 +140,12 @@ lapply(d1, \(x) { x <- x[x$IBS >= .8, ];
 
 ```
 
+## Ranks
+
 Given match of a field sample to a reference sample in one method; what is the rank of that reference sample in other methods? (only for IBS >= 0.8)
 
-```{r pressure, fig.width=8, fig.height=4}
-rank_plot <- function(z, add=FALSE, main="") {
+```{r pressure, fig.width=12, fig.height=5}
+rank_plot <- function(z, add=FALSE, main="", ylab="") {
 	M = c("IBS", "DAP")
 	#z$var_rank[is.na(z$var_rank)] <- max(z$var_rank, na.rm=TRUE)
 	z <- na.omit(z)
@@ -121,7 +156,7 @@ rank_plot <- function(z, add=FALSE, main="") {
 	} else {
 		plot(sort(z$var_rank), (1:nrow(z))/nrow(z), 
 		     xlab="Rank by other algorithm", 
-			   ylab="fraction of samples", axes=FALSE,
+			   ylab=ylab, axes=FALSE,
 			   xlim=c(0, 10), yaxs="i", xaxs="i",
 			   las=1, type="l", lwd=4, col="blue", main=main)
 	   axis(1, 0:10)
@@ -131,26 +166,30 @@ rank_plot <- function(z, add=FALSE, main="") {
 	}
 }
 n <- length(dap1)
-par(mfrow=c(1, n))
+par(mfrow=c(2, 5), mar=c(4,4,2,0))
+
 for (i in 1:n) {
+   ylab <- ifelse(i %in% c(1,6), "fraction of samples", "")
    ib <- ibs[[i]]
    ib <- ib[ib$IBS >= 0.8, ]
    ib1 <- ibs1[[i]]
    ib1 <- ib1[ib1$IBS >= 0.8, ]
    z1 <- merge(dap1[[i]], ib, by=c("field_id", "variety"), all.x=TRUE)
    z2 <- merge(ib1, dap[[i]], by=c("field_id", "variety"), all.x=TRUE)
-   rank_plot(z1, main=olabs[i])
+   rank_plot(z1, main=olabs[i], ylab=ylab)
    rank_plot(z2, TRUE)
 }
 
 ```
 
 
+## Correlation
+
 What is the correlation between all values (only for IBS >= 0.8)?
 
-```{r cor, fig.width=8, fig.height=8}
-par(mfrow=c(2, 2), mar=c(4, 4, 3, 1))
-s <- sapply(1:length(d), \(i) {
+```{r cor, fig.width=12, fig.height=10}
+par(mfrow=c(4, 5), mar=c(4, 4, 3, 1))
+s <- lapply(1:length(d), \(i) {
  x <- d[[i]]
  x <- x[x$IBS >= 0.8, ]  
  plot(x$IBS, x$Probability, cex=1.5, main=olabs[i], xlab="IBS",
@@ -164,7 +203,7 @@ s <- sapply(1:length(d), \(i) {
  cor(x$var_rank.x, x$var_rank.y, method = "spearman",
        use="pairwise.complete.obs")) 
  })
-
+s <- do.call(rbind, s)
 rownames(s) <- olabs
 colnames(s) <- c("cor", "rank-cor")
 s <- round(s, 3)
@@ -173,67 +212,42 @@ knitr::kable(s, caption="Correlation") |>
 
 ```
 
-
+</br>
 Correlation by IBS cut-off
 
-```{r varcor, fig.width=8, fig.height=3.5}
+```{r varcor, fig.width=12, fig.height=5}
 coffs <- seq(0.5, 0.95, .05)
 s <- lapply(1:length(d), \(i) {
- x <- d[[i]]
+  x <- d[[i]]
  sapply(1:length(coffs), \(j) {
     x <- x[x$IBS >= coffs[j], ]  
-    c(cor(x$IBS, x$Probability, use="pairwise.complete.obs"),
+    if (nrow(x) < 25) {
+      c(NA, NA)
+    } else {
+    suppressWarnings(c(cor(x$IBS, x$Probability, use="pairwise.complete.obs"),
     cor(x$var_rank.x, x$var_rank.y, method = "spearman",
-       use="pairwise.complete.obs")) 
+       use="pairwise.complete.obs")) )
+    }
  }) |> t()
 })
 
 
-par(mfrow=c(1, 2), mar=c(4, 4, 3, 1))
-for (i in 1:2) {
+par(mfrow=c(2, 5), mar=c(4,4,2,0))
+
+for (i in 1:length(s)) {
   plot(coffs, s[[i]][,1], main=olabs[i], 
         xlab="IBS cut-off", 
-       ylab="correlation IBS & DAP",
-       ylim=c(floor(min(s[[i]] * 10))/10, 1),
+       ylab=ifelse(i %in% c(1,6), "correlation IBS & DAP", ""),
+       ylim=c(floor(min(s[[i]] * 10, na.rm=TRUE))/10, 1),
        col="blue", pch=20, type="b", las=1)
   lines(coffs, s[[i]][,2], type="b", col="red")
 
   if (i == 1) {
 		legend("bottomleft", 
-		       legend=c("IBS", "DAP"), lwd=2, 
+		       legend=c("correlation", "rank correlation"), lwd=2, 
 		       col=c("blue", "red"), cex=.75)
   }
 }
 ```
 
-
-## Varieties 
-
-Each dot is the number of calls for a reference variety by either method. The line is *y=x* (where you would want the dots to be).
-
-```{r besties, fig.width=8, fig.height=4.5}
-i <- lapply(ibs1, \(x) {
-  x <- as.data.frame(table(x$variety[x$IBS >0.8]))
-  colnames(x) <- c("variety", "IBS")
-  x
-})
-j <- lapply(dap1, \(x) {
-  x <- as.data.frame(table(x$variety))
-  colnames(x) <- c("variety", "DAP")
-  x
-})
-
-k <- lapply(1:length(i), \(p) {
-    m <- merge(i[[p]], j[[p]], by="variety", all=TRUE)
-    m[is.na(m)] <- 0
-    m[rev(order(m$IBS)), ]
-})
-
-par(mfrow=c(ceiling(length(k)/2), 2))
-for (i in 1:2) {
-   plot(k[[i]][,-1], xlab="n (IBS)", ylab="n (DAP)", 
-        main=olabs[i], pch=20, col="orange", las=1)
-  abline(0,1)
-}
-```
 
