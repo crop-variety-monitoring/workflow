@@ -3,6 +3,8 @@
 *.md
 /figure
 *.html
+*.pdf
+/desc 
 
 # History files
 .Rhistory

@@ -106,6 +106,8 @@ for (i in 1:length(k)) {
 
 ## Distribution of best match scores 
 
+remove .8 s
+
 ```{r match_scores, fig.width=12, fig.height=5}
 par(mfrow=c(2, 5), mar=c(4,4,2,0))
 for (i in 1:length(d1)) {

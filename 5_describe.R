@@ -22,20 +22,31 @@ ordi <- grep("ordnr <- ", rmd)
 crpi <- grep("crop <- ", rmd)
 cnti <- grep("country <- ", rmd)
 
-caci <- grep("docache <-", rmd)
-rmd[caci] <- "docache <- FALSE"
+#caci <- grep("docache <-", rmd)
+#rmd[caci] <- "docache <- FALSE"
 
+dohtml <- FALSE
+dopdf <- TRUE
 for (i in 1:nrow(ords)) {
 	print(ords$cc[i])
-	outf <- paste0(ords$country[i], "_", ords$crop[i], ".html")
+	print(ords$name[i])
 	rmd[titi] <- paste0("title: ", ords$cc[i])
-	rmd[ordi] <- paste0("order <- '", ords$name[i], "'")
+	rmd[ordi] <- paste0("ordnr <- '", ords$name[i], "'")
 	rmd[crpi] <- paste0("crop <- '", ords$crop[i], "'")
 	rmd[cnti] <- paste0("country <- '", ords$country[i], "'")
-	writeLines(rmd, "temp.Rmd")
-	rmarkdown::render("temp.Rmd", "html_document", "temp.html", envir=new.env())
-	file.rename("temp.html", file.path(dout, outf))
-}
+	fpath <- file.path("desc", ords$name[i])
+	dir.create(fpath, FALSE, TRUE)
+	frmd <- file.path(fpath, "temp.Rmd")
+	writeLines(rmd, frmd)
+	outf <- paste0(ords$country[i], "_", ords$crop[i])
 
-file.remove("temp.Rmd")
+	if (dohtml) {
+		rmarkdown::render(frmd, "html_document", "temp", envir=new.env())
+		file.rename(gsub(".Rmd", ".html", frmd), file.path(dout, paste0(outf, ".html")))
+	}
+	if (dopdf) {
+		rmarkdown::render(frmd, "pdf_document", "temp", envir=new.env())
+		file.rename(gsub(".Rmd", ".pdf", frmd), file.path(dout, paste0(outf, ".pdf")))
+	}
+}
 

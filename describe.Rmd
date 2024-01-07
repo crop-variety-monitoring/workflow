@@ -11,11 +11,11 @@ editor_options:
 
 
 ```{r setup, include=FALSE}
-ordnr <- "DCas23-7954"
 docache <- TRUE
-crop <- substr(ordnr, 2, 3)
 
-knitr::opts_chunk$set(echo = TRUE)
+is_html <- knitr::is_html_output()
+knitr::opts_chunk$set(echo=is_html)
+#knitr::opts_chunk$set(echo = TRUE)
 
 this <- system("hostname", TRUE)
 if (this == "LAPTOP-IVSPBGCA") { 
@@ -30,17 +30,20 @@ ktab <- function(data, caption) {
     kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
 }
 
-scrolltab <- function(data, caption) {
+scrolltab <- function(data, caption, width="100%") {
   rownames(data) <- NULL
   kableExtra::kbl(data, caption=caption) |>
     kableExtra::kable_classic(full_width = F,  position = "right") |>
     kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> 
-    kableExtra::scroll_box(width="100%", height="400px")
+    kableExtra::scroll_box(width=width, height="400px")
 }
 ```
 
 
 ```{r fileread, include=FALSE, cache=docache}
+ordnr <- "DCas23-7954"
+crop <- substr(ordnr, 2, 3)
+
 f1 <- list.files(file.path(dpath, "input"), 
               pattern=paste0(ordnr, "_SNP.csv"), recursive=TRUE, full=TRUE)
 stopifnot(length(f1) == 1)
@@ -66,13 +69,23 @@ bibs <- readxl::read_excel(fxl, "best_match") |> data.frame()
 bibs <- bibs[!is.na(bibs$field_id), ]
 ```
 
+```{r}
+fpdf <- ""
+if (is_html) {
+   fpdf <- paste0("You can also use a <a href=", country, "_", crop, ".pdf", ">pdf version</a> of this document.")
+}
+```
+
+
 ### Introduction
+
+`r fpdf`
 
 Describing order: `r ordnr` for `r crop` in `r country`
 
 The raw data had `r nrow(x$snp)` SNPs and `r ncol(x$snp)-1` samples (`r sum(inf$reference)` references and `r sum(!inf$reference)` field samples).  
 
-```{r missing, fig.width=7, fig.height=3.5}
+```{r missing, fig.width=6, fig.height=3}
 par(mfrow=c(1,2), mar=c(4,4,1,0))
 
 snp <- x$snp[,-c(1:2)]
@@ -128,31 +141,11 @@ mgs <- ifelse(mg == 0, "No", mg)
 
 ### Single genotype?
 
-In the case of clonally propagated or inbreeding species, one would expect that, if a sample consisted of a single genotype, the counts for each heterozygous SNP variant would have a proportion of 1. The "heterozygosity index" is the median score for all heterozygous markers of a variety. Since our samples consisted of 5 plants, I only SNP pairs with at least 5 counts in total, and with proportions of at least 0.2. Also, samples with less then 25 heterozygous markers are not considered.
+In the case of clonally propagated or inbreeding species, one would expect that, if a sample consisted of a single genotype, the counts for each heterozygous SNP variant would have a proportion of aout 1. The "heterozygosity index" is the median score of these proportions for all heterozygous markers of a variety. Samples with less then 20% heterozygous markers are not considered.
 
-```{r purity, fig.width=4, fig.height=4, cache=docache}
-p <- as.matrix(xc$snp[,-(1:2)])
-i <- colSums(is.na(p)) < (0.2 * nrow(p))
-p <- p[,i]
-# not hetero
-p[p==0] <- NA
-# at least 10 heteros
-i <- seq(1, nrow(p), 2)
-p1 <- p[i,]
-p2 <- p[i+1,]
-nv <- ncol(p1) 
-out <- rep(NA, nv)
-for (i in 1:nv) {
-    pi <- na.omit(cbind(p1[,i], p2[,i]))
-    if (!(isTRUE(nrow(pi) > 25))) next
-    pi <- pi[rowSums(pi)> 4, ]
-    if (!(isTRUE(nrow(pi) > 25))) next
-    pi <- apply(pi, 1, sort) |> t()
-    s <- pi[,1] / pi[,2]
-    # if s if very small it cannot be meaningful
-    out[i] <- median(s[s > 0.2])
-}
-out <- sort(out)
+```{r purity, fig.width=4, fig.height=4, cache=FALSE}
+out <- matchpoint:::purity(xc, mr=0.2, minhet=0)  |> sort()
+
 nv <- length(out)
 par(mar=c(4,4,1,1))
 plot((1:nv)/nv, out, las=1, pch=20, 
@@ -170,10 +163,10 @@ grid()
 ```{r gatherref}
 ibs <- bibs[bibs$IBS > 0.8,]
 bm <- as.data.frame(table(ibs$ref_id))
-sref <- colnames(x2$snp) %in% inf$sample[inf$reference]
-ref <- x2$snp[, sref]
-ref <- matchpoint:::remove_sparse_records(ref)
-dst <- matchpoint:::hamming_distance(ref)
+x2snp <- x2$snp[,-2]
+x2snp <- matchpoint:::remove_sparse_records(x2snp, rows=2, verbose=F)
+sref <- colnames(x2snp) %in% inf$sample[inf$reference]
+dst <- matchpoint:::hamming_distance(x2snp[, sref])
 #hc <- dendextend::find_dend(as.dist(dst))
 hc <- hclust(as.dist(dst))
 labs <- hc$labels[hc$order]
@@ -183,7 +176,7 @@ hits <- bm[k, 2]
 hits[!is.na(hits)] <- paste0(" [", hits[!is.na(hits)], "]")
 hits[is.na(hits)] <- ""
 variety <- inf$variety[j]
-if (any(is.na(inf$sample[j]))) {
+if (!all(is.na(inf$inventory[j]))) {
 	variety2 <- paste0(variety, " (", inf$sample[j], " / ", inf$inventory[j],") ", hits)
 } else {
 	variety2 <- paste0(variety, " (", inf$sample[j], ") ", hits)
@@ -202,7 +195,7 @@ The reference sample had `r length(unique(vars))` different varieties, each one 
 
 <div class = "row">
 <div class = "col-md-6">
-```{r plotmatch, fig.height=6, fig.width=5}
+```{r plotmatch, fig.height=5, fig.width=5}
 lab <- as.character(bm[,1])
 lab[bm[,2] < 15] <- ""
 par(mar=c(4, 4, 0, 1))
@@ -217,43 +210,12 @@ scrolltab(bm, "Number of matched field samples by reference variety")
 </div></div>
 
 
-Below is a dendrogram based on the Hamming distance and complete linkage clustering. The unit distance is the number of mutations that separate each reference. The labels are formatted as follows: `variety (sample_ID / inventory_ID) [number of IBS matches]` or `variety (sample_ID) [number of IBS matches]` if there was no inventory_ID.
-
-The grey lines show the median, third quartile, `third quartile + 1.5 IQR` and maximum within variety distance, see below.)
-
-```{r plotdendo1, fig.width=6, fig.height=sum(sref)/10}
-diag(dst) <- NA
+```{r vars}
+#diag(dst) <- NA
 jj <- match(colnames(dst), inf$sample)
-var <- inf$variety[jj]
-u <- unique(var)
-v <- sapply(1:length(u), \(i) {
-  j <- which(u[i] == var)
-  dv <- dst[j, j]
-  mean(dv, na.rm=TRUE)
-})
-v[!is.finite(v)] <- 0
-set.seed(1)
-rc <- sample(rainbow(length(unique(variety))))
-cols <- rep(NA, length(variety))
-ref <- as.integer(as.factor(variety))
-cols <- rc[ref]
-dc <- as.dendrogram(hc)
-dc <- dendextend::set(dc, "labels", variety2)
-dc <- dendextend::set(dc, "labels_cex", 0.5)
-dc <- dendextend::set(dc, "labels_col", cols)
-
-qth <- quantile(v)
-iqr3 <- qth[4] + diff(qth[c(2,4)])
-
-par(mar=c(3, 1, 0, 10))
-plot(dendextend::highlight_branches(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6)
-lines(cbind(qth[2], c(0, length(variety))), col=gray(.5, alpha=.25), lwd=.5)
-lines(cbind(qth[3], c(0, length(variety))), col=gray(.5, alpha=.25), lwd=1)
-lines(cbind(qth[4], c(0, length(variety))), col=gray(0.25, alpha=.25), lwd=2)
-lines(cbind(iqr3, c(0, length(variety))), col=gray(0, alpha=.25), lwd=3)
-lines(cbind(qth[5], c(0, length(variety))), col=rgb(1,0,0,0.25), lwd=4)
+vars <- inf$variety[jj]
+v <- matchpoint:::var_dist(dst, vars)
 ```
-
 
 The median average Hamming distance between samples of the same variety is `r round(median(v), 1)`% mutations (the number of mutations relative to the number of usable SNPs in the assay). This is before correcting the reference for any obvious inconsistencies.
 
@@ -263,27 +225,107 @@ fv <- 100*v/nrow(snp)
 boxplot(fv, ylab="Dissimilarity within varieties\n(% mutations)", las=1)
 ```
 
+## Reference scrub
 
-## Trimming 
+There is a number of problems that can be encountered in a reference set. (1) Some varieties cannot be clearly separated, and these are combined into a single variety. These are shown below, with the original names separated by ` # `; (2) Some replicateds of a variety are clearly in the wrong group. These are renamed to the group the belong to (the renamed references get an `*` appended to their name); (3) There are multiple separate groups for the same variety. These are labeled `a`, `b`, etc (not implemented yet). 
 
-```{r plotdendocln, fig.width=6, fig.height=sum(sref)/10}
+Below is a dendrogram based on the Hamming distance and complete linkage clustering. The unit distance is the number of mutations that separate each reference. The labels are formatted as follows: `variety (sample_ID / inventory_ID) [number of IBS matches]` or `variety (sample_ID) [number of IBS matches]` if there was no inventory_ID.
+
+The red line shows the cut off used when making new groups based on the distance matrix (not on this particular dendrogram representation). 
+
+
+```{r plotdendo2, fig.width=10, fig.height=sum(sref)/8}
+set.seed(1)
+#rc <- sample(rainbow(length(unique(variety))))
+rc <- sample(viridis::turbo(length(unique(variety))))
+cols <- rep(NA, length(variety))
+ref <- as.integer(as.factor(variety))
+cols <- rc[ref]
+dc <- as.dendrogram(hc)
+dc <- dendextend::set(dc, "labels", variety2)
+dc <- dendextend::set(dc, "labels_cex", 0.55)
+dc <- dendextend::set(dc, "labels_col", cols)
+qth <- quantile(v)
+#layout(cbind(1,2), c(0.7, 0.3))
+#par(mar=c(3, 1, 0, 9))
+par(mar=c(3, 1, 0, 20))
+
+plot(dendextend::highlight_branches_lwd(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6)
+#lines(cbind(qth[2], c(0, length(variety))), col=gray(.5, alpha=.25), lwd=.5)
+#lines(cbind(qth[3], c(0, length(variety))), col=gray(.5, alpha=.25), lwd=1)
+#lines(cbind(qth[4], c(0, length(variety))), col=gray(0.25, alpha=.25), lwd=2)
+#lines(cbind(qth[5], c(0, length(variety))), col=rgb(0,1,0,0.5), lwd=3)
+
+maxcut = 250
+if (country == "Tanzania") {
+  if (crop=="rice") maxcut = 100
+}
+
+# refine
 j <- match(colnames(dst), inf$sample)
-vars <- inf$variety[j]
-dcl <- matchpoint:::clean_dist_labels(dst, vars, iqr3, nmax=100, verbose=FALSE) 
-scrolltab(dcl[dcl$changed, c("sample", "from", "to")], "")
+cut <- max(15, qth[2])
+ddst = dst
+startvars <- inf$variety[j]
+cr <- matchpoint:::clean_reference(dst, startvars, cut, nmax=100, verbose=FALSE) 
 
-j <- match(labs, dcl$sample)
-var1 <- dcl$to[j]
+cr <- matchpoint:::clean_reference(dst, vars, min(75, max(50, qth[3])), nmax=100, verbose=FALSE) 
+
+j <- match(colnames(dst), cr$sample)
+vars <- gsub(" \\*", "", cr$to[j])
+v <- matchpoint:::var_dist(dst, vars)
+cut <- min(maxcut, min(150, quantile(v)[3]))
+cr <- matchpoint:::clean_reference(dst, vars, cut, nmax=100, verbose=FALSE)
+
+j <- match(colnames(dst), cr$sample)
+vars <- gsub(" \\*", "", cr$to[j])
+v <- matchpoint:::var_dist(dst, vars)
+cut <- min(maxcut, quantile(v)[4])
+cr <- matchpoint:::clean_reference(dst, vars, cut, nmax=100, verbose=FALSE) 
+
+j <- match(labs, cr$sample)
+var1 <- gsub(" \\*", "", cr$to[j])
 var2 <- gsub(" \\*", "", var1)
 
-set.seed(1)
-rc <- sample(rainbow(length(unique(var2))))
-cols <- rep(NA, length(var2))
-cols <- rc[as.integer(as.factor(var2))]
-dc <- dendextend::set(dc, "labels", var1)
-dc <- dendextend::set(dc, "labels_col", cols)
+j <- match(labs, inf$sample)
+var0 <- inf$variety[j]
+changed <- var0 != var2
 
-par(mar=c(3, 1, 0, 10))
-plot(dendextend::highlight_branches(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6)
+set.seed(1)
+rc2 <- sample(viridis::turbo(length(unique(var2))))
+cols2 <- rep(NA, length(var2))
+ref2 <- as.integer(as.factor(var2))
+cols2 <- rc[ref2]
+
+#plot(cbind(0, 1:length(var1)), type="n", axes=FALSE)
+pd <- diff(par("usr")[1:2])/3.5
+
+var1[!changed] <- ""
+text(cbind(pd, 1:length(var1)), labels=var1, col=cols2, pos=4, xpd=TRUE, cex=0.55)
+
+text(0, length(var1)+2, labels="Orignal name", pos=4, xpd=TRUE, cex=1)
+text(pd, length(var1)+2, labels="Fixed name", pos=4, xpd=TRUE, cex=1)
+
+lines(cbind(cut, c(0, length(variety))), col=rgb(1,0,0,0.5), lwd=1)
+text(cut, 0, labels=round(cut), pos=1, xpd=TRUE, cex=.5, col="red")
+
+#points(cbind(pd, 1:length(var1)), xpd=T) #set.seed(1)
+#rc <- sample(rainbow(length(unique(var2))))
+#cols <- rep(NA, length(var2))
+#cols <- rc[as.integer(as.factor(var2))]
+#text()
+#par(mar=c(3, 1, 0, 10))
+#plot(dendextend::highlight_branches(dc), #horiz=TRUE, nodePar=list(cex=.1), cex=.6)
+#lines(cbind(cut, c(0, length(variety))), #col=gray(.5, alpha=.5), lwd=1)
 ```
 
+The table below shows the changes made in the labels. 
+
+```{r changtab}
+changed <- merge(inf[, c("sample", "variety")], cr[, c("sample", "to")], by="sample")
+colnames(changed)[2] <- "from"
+changed <- changed[changed$from != changed$to,]
+scrolltab(changed, "", width="50%")
+```
+
+</br>
+</br>
