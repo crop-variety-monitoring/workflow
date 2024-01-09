@@ -11,7 +11,7 @@ setwd(file.path(gitpath, "workflow"))
 dout <- file.path(path, "results/html")
 dir.create(dout, FALSE, TRUE)
 
-rmd <- readLines("describe.Rmd")
+rmd <- readLines("results.Rmd")
 ords <- matchpoint:::order_names()
 ords <- ords[rev(order(ords$cc)), ]
 
@@ -25,7 +25,6 @@ cnti <- grep("country <- ", rmd)
 #caci <- grep("docache <-", rmd)
 #rmd[caci] <- "docache <- FALSE"
 
-dohtml <- FALSE
 dopdf <- TRUE
 for (i in 1:nrow(ords)) {
 	print(ords$cc[i])
@@ -34,17 +33,16 @@ for (i in 1:nrow(ords)) {
 	rmd[ordi] <- paste0("ordnr <- '", ords$name[i], "'")
 	rmd[crpi] <- paste0("crop <- '", ords$crop[i], "'")
 	rmd[cnti] <- paste0("country <- '", ords$country[i], "'")
-	fpath <- file.path("desc", ords$name[i])
+	fpath <- file.path("results", ords$name[i])
 	dir.create(fpath, FALSE, TRUE)
 	frmd <- file.path(fpath, "temp.Rmd")
 	writeLines(rmd, frmd)
-	outf <- paste0(ords$country[i], "_", ords$crop[i])
+	outf <- paste0(ords$country[i], "_", ords$crop[i], "_results")
 
 	if (dohtml) {
 		rmarkdown::render(frmd, "html_document", "temp", envir=new.env())
 		file.rename(gsub(".Rmd", ".html", frmd), file.path(dout, paste0(outf, ".html")))
-	}
-	if (dopdf) {
+	} else {
 		rmarkdown::render(frmd, "pdf_document", "temp", envir=new.env())
 		file.rename(gsub(".Rmd", ".pdf", frmd), file.path(dout, paste0(outf, ".pdf")))
 	}

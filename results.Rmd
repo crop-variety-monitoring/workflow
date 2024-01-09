@@ -1,0 +1,88 @@
+---
+title: "Results"
+date: "Compiled on `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    df_print: paged
+    code_folding: hide
+editor_options:
+  chunk_output_type: console
+---
+
+
+```{r setup, include=FALSE}
+docache <- TRUE
+
+is_html <- knitr::is_html_output()
+knitr::opts_chunk$set(echo=is_html)
+#knitr::opts_chunk$set(echo = TRUE)
+
+this <- system("hostname", TRUE)
+if (this == "LAPTOP-IVSPBGCA") { 
+	dpath <- "G:/.shortcut-targets-by-id/1mfeEftF_LgRcxOT98CBIaBbYN4ZHkBr_/share/image"
+} else if (this == "DESKTOP-M2BA7AA") {
+	dpath <- "google drive path"
+}
+
+ktab <- function(data, caption) {
+    kableExtra::kbl(data, caption=caption) |>
+    kableExtra::kable_classic(full_width=FALSE) |> 
+    kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+}
+
+scrolltab <- function(data, caption, width="100%") {
+  rownames(data) <- NULL
+  kableExtra::kbl(data, caption=caption) |>
+    kableExtra::kable_classic(full_width = F,  position = "right") |>
+    kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> 
+    kableExtra::scroll_box(width=width, height="400px")
+}
+```
+
+
+```{r fileread, include=FALSE, cache=docache}
+ordnr <- "DCas23-7954"
+crop <- substr(ordnr, 2, 3)
+
+f1 <- list.files(file.path(dpath, "input"), 
+              pattern=paste0(ordnr, "_SNP.csv"), recursive=TRUE, full=TRUE)
+stopifnot(length(f1) == 1)
+f2 <- gsub("_SNP.csv$", "_SNP_2row.csv", f1)
+fc <- gsub("_SNP.csv$", "_Counts.csv", f1)
+
+dirn <- dirname(f1)
+country <- substr(dirn, nchar(dirn)-2, nchar(dirn))
+
+inf <- read.csv(gsub("SNP", "variety-info", f1))
+x <- matchpoint::read_dart(f1)
+x2 <- matchpoint::read_dart(f2)
+xc <- matchpoint::read_dart(fc)
+
+cns <- colnames(x$snp)[-1]
+
+stopifnot(all(colnames(x$snp)[-1] == colnames(x2$snp)[-(1:2)]))
+
+fxl <- gsub("_SNP.csv", "_IBS.xlsx", f1)
+fxl <- gsub("input", "output/IBS", fxl)
+dibs <- readxl::read_excel(fxl, "distance")
+bibs <- readxl::read_excel(fxl, "best_match") |> data.frame()
+bibs <- bibs[!is.na(bibs$field_id), ]
+```
+
+```{r}
+fpdf <- ""
+if (is_html) {
+   fpdf <- paste0("You can also use a <a href=", country, "_", crop, "_reference.pdf", ">pdf version</a> of this document.")
+}
+```
+
+
+### Introduction
+
+`r fpdf`
+
+This page provides a brief description of the results for `r crop` in `r country` (order `r ordnr`).
+
+We had data for `r nrow(x$snp)` SNPs and `r ncol(x$snp)-1` samples (`r sum(inf$reference)` references and `r sum(!inf$reference)` field samples).  
+
+more coming soon...

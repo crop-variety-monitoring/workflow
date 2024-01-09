@@ -5,6 +5,8 @@
 *.html
 *.pdf
 /desc 
+/old
+/results 
 
 # History files
 .Rhistory

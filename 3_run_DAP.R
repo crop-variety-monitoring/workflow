@@ -16,7 +16,7 @@ ff <- list.files("input", pattern="Counts.csv$", recursive=TRUE, full=TRUE)
 # skip teff for now. 
 #ff <- ff[!grepl("DEra22-7523", ff)]
 
-ff = ff[2]
+counts.file = ff[2]
 
 for (counts.file in ff) {
 	ordnr <- gsub("_Counts.csv", "", basename(counts.file))
@@ -33,12 +33,8 @@ for (counts.file in ff) {
 	write.csv(info, tmpfile, na="")
 
 	x <- dartVarietalID::runSampleAnalysis(counts.file,
-                         info.file = tmpfile,
-                         ncores = parallel::detectCores() - 1,
-                         pop.size = 10,
-                         dis.mat = TRUE,
-                         na.perc.threshold = 50)
-
+            info.file = tmpfile, ncores = parallel::detectCores() - 1,
+            pop.size = 10, dis.mat = TRUE, na.perc.threshold = 50)
 
 	saveRDS(x, paste0(filename, ".rds"))
 	matchpoint:::DAP_write_excel(x, info, filename)

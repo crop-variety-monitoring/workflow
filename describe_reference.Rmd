@@ -1,5 +1,5 @@
 ---
-title: "Describe SNP data"
+title: "Describe Reference"
 date: "Compiled on `r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
@@ -72,7 +72,7 @@ bibs <- bibs[!is.na(bibs$field_id), ]
 ```{r}
 fpdf <- ""
 if (is_html) {
-   fpdf <- paste0("You can also use a <a href=", country, "_", crop, ".pdf", ">pdf version</a> of this document.")
+   fpdf <- paste0("You can also use a <a href=", country, "_", crop, "_reference.pdf", ">pdf version</a> of this document.")
 }
 ```
 
@@ -81,7 +81,7 @@ if (is_html) {
 
 `r fpdf`
 
-Describing order: `r ordnr` for `r crop` in `r country`
+This page provides a brief description of the reference varieties for `r crop` in `r country` (order `r ordnr`).
 
 The raw data had `r nrow(x$snp)` SNPs and `r ncol(x$snp)-1` samples (`r sum(inf$reference)` references and `r sum(!inf$reference)` field samples).  
 

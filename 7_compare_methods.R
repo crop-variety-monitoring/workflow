@@ -12,4 +12,4 @@ dout <- file.path(path, "results/html")
 dir.create(dout, FALSE, FALSE)
 
 #rmarkdown::render("compare.Rmd", "html_document")
-file.copy("compare.html", file.path(dout, "compare.html"), overwrite=TRUE)
+file.copy("compare.html", file.path(dout, "compare_methods.html"), overwrite=TRUE)
