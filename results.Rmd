@@ -33,9 +33,9 @@ ktab <- function(data, caption) {
 scrolltab <- function(data, caption, width="100%") {
   rownames(data) <- NULL
   kableExtra::kbl(data, caption=caption) |>
-    kableExtra::kable_classic(full_width = F,  position = "right") |>
+    kableExtra::kable_classic(full_width = F) |>
     kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> 
-    kableExtra::scroll_box(width=width, height="400px")
+    kableExtra::scroll_box(width=width, height="375px")
 }
 ```
 
@@ -54,35 +54,147 @@ dirn <- dirname(f1)
 country <- substr(dirn, nchar(dirn)-2, nchar(dirn))
 
 inf <- read.csv(gsub("SNP", "variety-info", f1))
-x <- matchpoint::read_dart(f1)
-x2 <- matchpoint::read_dart(f2)
-xc <- matchpoint::read_dart(fc)
+dart1 <- matchpoint::read_dart(f1)
+dart2 <- matchpoint::read_dart(f2)
+dartc <- matchpoint::read_dart(fc)
 
-cns <- colnames(x$snp)[-1]
+cns <- colnames(dart1$snp)[-1]
 
-stopifnot(all(colnames(x$snp)[-1] == colnames(x2$snp)[-(1:2)]))
 
 fxl <- gsub("_SNP.csv", "_IBS.xlsx", f1)
 fxl <- gsub("input", "output/IBS", fxl)
-dibs <- readxl::read_excel(fxl, "distance")
+dibs <- readxl::read_excel(fxl, "distance") |> data.frame(check.names=FALSE)
+rownames(dibs) <- dibs[,1]
+dibs <- dibs[,-1]
 bibs <- readxl::read_excel(fxl, "best_match") |> data.frame()
-bibs <- bibs[!is.na(bibs$field_id), ]
+bibs <- na.omit(bibs)
+
+### compute 
+snp1 <- dart1$snp[,-1]
+nr <- nrow(snp1)
+nc <- ncol(snp1)
+
+# remove snps with many missing values
+mr <- rowSums(is.na(snp1)) / nc
+msnp <- sum(mr > .5)
+msnpp <- round(100 * msnp / length(mr), 1)
+snp1 <- snp1[mr <= 0.5, ]
+nr1 <- nrow(snp1)
+
+i <- apply(snp1, 1, \(i) length(na.omit(unique(i))))
+snp1 <- snp1[i>1,]
+sd <- as.data.frame(table(i))
+sd[,1] <- as.integer(as.character(sd[,1]))
+sinf <- ifelse(nrow(snp1) < nr1, paste(nrow(snp1), "of the "), "All the ")
+sinfp <- round(100 * nrow(snp1) / nrow(dart1$snp), 1)
+Markers <- c("No variation", "Two variants found", "Three variants found")[sd[,1]]
+sd2 <- data.frame(Markers, Count=sd$Freq)
+
+# remove genotypes with many missing values
+mrg <- colSums(is.na(snp1)) / nrow(snp1)
+mg <- sum(mrg > .5)
+mgp <- round(100 * mg / length(mrg), 1)
+snp1 <- snp1[, mrg <= 0.5]
+m <- match(colnames(snp1), inf$sample)
+nref <- sum(inf$reference[m])
+nfld <- sum(!inf$reference[m])
+sref <- colnames(snp1) %in% inf$sample[inf$reference]
+
+mgs <- ifelse(mg == 0, "No", mg)
+
+pdftxt <- ifelse(is_html, paste0('<a href="', country, "_", crop, '_results.pdf">pdf version</a>'), "")
 ```
 
-```{r}
-fpdf <- ""
-if (is_html) {
-   fpdf <- paste0("You can also use a <a href=", country, "_", crop, "_reference.pdf", ">pdf version</a> of this document.")
-}
-```
-
+`r pdftxt`
 
 ### Introduction
 
-`r fpdf`
+This page describes the IBS results for `r crop` in `r country` (order `r ordnr`). 
 
-This page provides a brief description of the results for `r crop` in `r country` (order `r ordnr`).
+### Sample size 
 
-We had data for `r nrow(x$snp)` SNPs and `r ncol(x$snp)-1` samples (`r sum(inf$reference)` references and `r sum(!inf$reference)` field samples).  
+We had data for `r nr` SNPs and `r nc` samples (`r sum(inf$reference)` references and `r sum(!inf$reference)` field samples). `r msnp` markers (`r msnpp`%) had a missing rate that was higher than 0.5. After removing these, we had `r nr1` SNPs left. `r sinf` remaining markers were informative in the sense that they showed variation between genotypes leaving us with `r sinfp`% of the original number of markers. `r mgs` genotypes (`r mgp`%) had a missing rate that was higher than 0.5. After removing these, we had `r ncol(snp1)` genotypes left (`r nref` references and `r nfld` field samples).
 
-more coming soon...
+<div class = "row">
+<div class = "col-md-7">
+```{r missingfig, fig.width=6, fig.height=2.5}
+par(mfrow=c(1,2), mar=c(4,4,1,0))
+plot(sort(mr), las=1, cex=.5, col="blue", ylab="Fraction missing data", xlab="Markers", ylim=c(0,1), cex.axis=.8)
+grid()
+par(mar=c(4,1,1,3))
+plot(sort(mrg), las=1, cex=.5, col="red", ylab="", ylim=c(0,1), xlab="Genotypes", yaxt = "n", cex.axis=.8)
+grid()
+```
+</div>
+<div class = "col-md-3">
+```{r inftab}
+ktab(sd2, "Variation across genotypes in SNP markers")
+```
+</div></div>
+
+
+### Matches
+
+```{r gatherref}
+ibs <- bibs[bibs$IBS > 0.8,]
+bm <- as.data.frame(table(ibs$variety))
+bm <- bm[rev(order(bm$Freq)), ]
+bm$perc <- round(100 * bm$Freq / nrow(bibs), 1)
+colnames(bm) <- c("variety", "number of matches", "% of samples")
+
+vars <- na.omit(ibs$variety)
+vars <- vars[vars != ""]
+```
+
+`r nrow(ibs)` (`r round(100*nrow(ibs)/nrow(bibs), 1)`%) of the field samples were matched to a reference sample with an IBS score >= 0.8. The reference sample had `r length(unique(vars))` different varieties;`r nrow(bm)` of these varieties were matched to at least one field sample. The most frequently matched variety was `r bm[1,1]` which was found `r bm[1,2]` times. 
+
+<div class = "row">
+<div class = "col-md-6">
+```{r plotmatch, fig.height=5.5, fig.width=6}
+lab <- as.character(bm[,1])
+lab[bm[,2] < 15] <- ""
+par(mar=c(4, 4, 0, 1))
+plot(bm[,2], las=1, cex=.4, col="red", pch=20, ylab="nuber of matches", xlab="order")
+text(1:nrow(bm), bm[,2], lab, cex=.5, xpd=TRUE, pos=4, col="blue")
+```
+</div>
+<div class = "col-md-6">
+```{r tabmatch}
+p8 <- round(100 * sum(bibs$IBS >= 0.8) / nrow(bibs), 1)
+scrolltab(bm, "Number of matched field samples by reference variety")
+```
+</div></div>
+
+</br>
+`r p8`% of the field samples had a IBS match of at least 0.8. 
+
+```{r vars, fig.width=4.5, fig.height=4.5}
+x <- (1:nrow(bibs))/nrow(bibs)
+plot(x, sort(bibs$IBS), ylab="IBS score", xlab="Field samples (fraction)", pch=20, col="red", las=1, cex=.5)
+grid()
+```
+
+### Identify unmatched varieties
+
+```{r plotdendo2, fig.width=12, fig.height=nrow(bibs)/24}
+cn <- which(colnames(dibs) %in% bibs$field_id)
+dst <- as.dist(dibs[cn, cn])
+hc <- hclust(dst)
+labs <- hc$labels[hc$order]
+j <- match(labs, ibs$field_id)
+vars <- ibs$variety[j]
+vars[is.na(vars)] <- ""
+
+set.seed(1)
+rc <- sample(viridis::turbo(length(unique(vars))))
+cols <- rep(NA, length(vars))
+ref <- as.integer(as.factor(vars))
+cols <- rc[ref]
+dc <- as.dendrogram(hc)
+dc <- dendextend::set(dc, "labels", vars)
+dc <- dendextend::set(dc, "labels_cex", 0.3)
+dc <- dendextend::set(dc, "labels_col", cols)
+par(mar=c(3, 0, 1, 6))
+plot(dendextend::highlight_branches_lwd(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6)
+abline(v=0.2, col="red")
+```
