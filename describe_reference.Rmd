@@ -41,7 +41,9 @@ scrolltab <- function(data, caption, width="100%") {
 
 
 ```{r fileread, include=FALSE, cache=docache}
-ordnr <- "DRi23-7825"
+ordnr <- "DEra22-7523_1_moreOrders"
+#"DCob22-7521_moreOrders"
+#"DRi23-7825"
 crop <- substr(ordnr, 2, 3)
 
 f1 <- list.files(file.path(dpath, "input"), 
@@ -66,12 +68,12 @@ inf <- inf[inf$reference,]
 all <- sum(inf$sample %in% colnames(dart1$snp))
 removed <- all - sum((inf$sample %in% colnames(snp1)))
 
-i <- which(colnames(snp2) %in% inf$sample)
-
+cn <- gsub("\\.1$", "", colnames(snp2))
+i <- which(cn %in% inf$sample)
 snp2 <- snp2[,i]
 dst <- matchpoint:::hamming_distance(snp2)
 
-inf <- inf[inf$sample %in% colnames(snp2), ]
+inf <- inf[inf$sample %in% cn, ]
 inf$inventory[is.na(inf$inventory)] <- inf$variety[is.na(inf$inventory)]
 nvars <- length(unique(inf$variety))
 tab0 <- as.data.frame(table(inf$variety))
@@ -87,7 +89,9 @@ fxl <- gsub("input", "output/IBS", fxl)
 dibs <- readxl::read_excel(fxl, "distance") |> data.frame(check.names=FALSE)
 rownames(dibs) <- dibs[,1]
 dibs <- dibs[,-1] |> as.matrix()
-colnames(dibs) <- gsub("_D.$", "", colnames(dibs))
+if (ordnr == "DEra22-7523_1_moreOrders") {
+  colnames(dibs) <- gsub("_D.$", "", colnames(dibs))
+}
 cn <- which(colnames(dibs) %in% inf$sample)
 dibs <- dibs[cn, cn]
 
@@ -123,9 +127,8 @@ There is a number of problems that can be encountered in a reference set.
 
 3) There can be multiple separate groups for the same variety that are genetically very distant. These are labeled `a`, `b`, etc (not implemented yet). 
 
-Below is a dendrogram based on the Hamming distance and complete linkage clustering. The unit distance is the number of mutations that separate each reference. The labels are formatted as follows: `variety (sample_ID / inventory_ID) [number of IBS matches]` or `variety (sample_ID) [number of IBS matches]` if there was no inventory_ID.
-
-The red line shows the cut off used when making new groups based on the distance matrix (not on this particular dendrogram representation). 
+Below is a dendrogram based on the Hamming distance and complete linkage clustering. The unit distance is the number of mutations that separate each reference. The labels are formatted as follows: `variety (sample_ID / inventory_ID) [number of IBS matches|number of DAP matches]`. 
+The matches and inventory_ID are ommited if there were none.The red line shows the cut off used when making new groups based on the distance matrix (not on this particular dendrogram representation). 
 
 
 ```{r plotdendo2, fig.width=10, fig.height=sum(inf$reference)/8}
@@ -142,6 +145,8 @@ h <- paste0(h_ibs, "|", h_dap)
 h <- gsub("NA", "0", h)
 h <- paste0("[", h, "]")
 hits <- gsub("\\[0\\|0]", "", h)
+
+labs <- gsub("\\.1$", "", labs)
 
 j <- match(labs, inf$sample)
 
@@ -168,7 +173,7 @@ dc <- dendextend::set(dc, "labels_col", cols)
 
 #layout(cbind(1,2), c(0.7, 0.3))
 #par(mar=c(3, 1, 0, 9))
-par(mar=c(3, 1, 0, 20))
+par(mar=c(3, 1, 0, 25))
 plot(dendextend::highlight_branches_lwd(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6)
 
 maxcut = 250
@@ -212,7 +217,7 @@ ref2 <- as.integer(as.factor(var2))
 cols2 <- rc[ref2]
 
 #plot(cbind(0, 1:length(var1)), type="n", axes=FALSE)
-pd <- diff(par("usr")[1:2])/3.5
+pd <- diff(par("usr")[1:2])/2
 
 var1[!changed] <- ""
 text(cbind(pd, 1:length(var1)), labels=var1, col=cols2, pos=4, xpd=TRUE, cex=0.55)

@@ -15,7 +15,6 @@ docache <- TRUE
 
 is_html <- knitr::is_html_output()
 knitr::opts_chunk$set(echo=is_html)
-#knitr::opts_chunk$set(echo = TRUE)
 
 this <- system("hostname", TRUE)
 if (this == "LAPTOP-IVSPBGCA") { 
@@ -161,6 +160,13 @@ text(1:nrow(bm), bm[,2], lab, cex=.5, xpd=TRUE, pos=4, col="blue")
 <div class = "col-md-6">
 ```{r tabmatch}
 p8 <- round(100 * sum(bibs$IBS >= 0.8) / nrow(bibs), 1)
+bm[,1] <- as.character(bm[,1])
+add <- bm[1, ]
+add[1,1] <- "not matched"
+add[1,2] <- nrow(bibs) - sum(bibs$IBS >= 0.8)
+add[1,3] <- 100 - p8
+bm = rbind(bm, add)
+bm = bm[rev(order(bm[,2])), ]
 scrolltab(bm, "Number of matched field samples by reference variety")
 ```
 </div></div>
@@ -177,19 +183,33 @@ grid()
 ### Identify unmatched varieties
 
 ```{r plotdendo2, fig.width=12, fig.height=nrow(bibs)/24}
-cn <- which(colnames(dibs) %in% bibs$field_id)
-dst <- as.dist(dibs[cn, cn])
+#cn <- which(colnames(dibs) %in% bibs$field_id)
+#dst <- as.dist(dibs[cn, cn])
+dst <- as.dist(dibs)
 hc <- hclust(dst)
 labs <- hc$labels[hc$order]
 j <- match(labs, ibs$field_id)
 vars <- ibs$variety[j]
+score <- ibs$IBS[j] |> round(2)
+k <- is.na(score)
+score[k] <- ""
+score[!k] <- paste0("  [", score[!k], "]")
+
+infr <- inf[inf$reference, ]
+j <- match(labs, infr$sample)
+refs <- infr$variety[j]
+isref <- !is.na(refs)
+vars[isref] <- refs[isref]
 vars[is.na(vars)] <- ""
+
 
 set.seed(1)
 rc <- sample(viridis::turbo(length(unique(vars))))
 cols <- rep(NA, length(vars))
-ref <- as.integer(as.factor(vars))
-cols <- rc[ref]
+cols <- rc[ as.integer(as.factor(vars)) ]
+vars[isref] <- paste0("-- ref -- ", vars[isref])
+vars <- paste0(vars, score)
+
 dc <- as.dendrogram(hc)
 dc <- dendextend::set(dc, "labels", vars)
 dc <- dendextend::set(dc, "labels_cex", 0.3)
@@ -198,3 +218,4 @@ par(mar=c(3, 0, 1, 6))
 plot(dendextend::highlight_branches_lwd(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6)
 abline(v=0.2, col="red")
 ```
+
