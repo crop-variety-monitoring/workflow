@@ -41,7 +41,7 @@ scrolltab <- function(data, caption, width="100%") {
 
 
 ```{r fileread, include=FALSE, cache=docache}
-ordnr <- "order DRi23-7825"
+ordnr <- "DRi23-7825"
 #"DRi23-7955_moreOrders"
 
 crop <- substr(ordnr, 2, 3)
@@ -143,8 +143,8 @@ k <- match(labs, b_dap[,1])
 h_dap <- b_dap[k, 2]
 h <- paste0(h_ibs, "|", h_dap)
 h <- gsub("NA", "0", h)
-h <- paste0("[", h, "]")
-hits <- gsub("\\[0\\|0]", "", h)
+h <- paste0("  [", h, "]")
+hits <- gsub("  \\[0\\|0]", "", h)
 
 labs <- gsub("\\.1$", "", labs)
 
@@ -152,9 +152,9 @@ j <- match(labs, inf$sample)
 
 variety <- inf$variety[j]
 if (!all(is.na(inf$inventory[j]))) {
-	variety2 <- paste0(variety, " (", inf$sample[j], " / ", inf$inventory[j],") ", hits)
+	variety2 <- paste0(variety, "  (", inf$sample[j], " / ", inf$inventory[j],") ", hits)
 } else {
-	variety2 <- paste0(variety, " (", inf$sample[j], ") ", hits)
+	variety2 <- paste0(variety, "  (", inf$sample[j], ") ", hits)
 }
 vars <- na.omit(inf$variety)
 vars <- vars[vars != ""]
@@ -221,12 +221,12 @@ ref2 <- as.integer(as.factor(var2))
 cols2 <- rc[ref2]
 
 #plot(cbind(0, 1:length(var1)), type="n", axes=FALSE)
-pd <- diff(par("usr")[1:2])/2
+pd <- diff(par("usr")[1:2]) 
 
 var1[!changed] <- ""
 text(cbind(pd, 1:length(var1)), labels=var1, col=cols2, pos=4, xpd=TRUE, cex=0.55)
 
-text(0, length(var1)+2, labels="Orignal name", pos=4, xpd=TRUE, cex=1)
+text(0, length(var1)+2, labels="Original name", pos=4, xpd=TRUE, cex=1)
 text(pd, length(var1)+2, labels="Fixed name", pos=4, xpd=TRUE, cex=1)
 
 lines(cbind(cut, c(0, length(variety))), col=rgb(1,0,0,0.5), lwd=1)
