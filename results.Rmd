@@ -214,7 +214,7 @@ dc <- as.dendrogram(hc)
 dc <- dendextend::set(dc, "labels", vars)
 dc <- dendextend::set(dc, "labels_cex", 0.3)
 dc <- dendextend::set(dc, "labels_col", cols)
-par(mar=c(3, 0, 1, 6))
+par(mar=c(0, 3, 1, 7))
 plot(dendextend::highlight_branches_lwd(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6)
 abline(v=0.2, col="red")
 ```

@@ -11,5 +11,9 @@ setwd(file.path(gitpath, "workflow"))
 dout <- file.path(path, "results/html")
 dir.create(dout, FALSE, FALSE)
 
-#rmarkdown::render("compare.Rmd", "html_document")
+rmarkdown::render("compare.Rmd", "html_document")
 file.copy("compare.html", file.path(dout, "compare_methods.html"), overwrite=TRUE)
+
+
+rmarkdown::render("compare.Rmd", "pdf_document")
+file.copy("compare.pdf", file.path(dout, "compare_methods.pdf"), overwrite=TRUE)

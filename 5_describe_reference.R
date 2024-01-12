@@ -23,11 +23,10 @@ cnti <- grep("country <- ", rmd)
 #caci <- grep("docache <-", rmd)
 #rmd[caci] <- "docache <- FALSE"
 
-dohtml <- TRUE
+dohtml <- T
 for (i in 1:nrow(ords)) {
 	print(ords$cc[i])
 	print(ords$name[i])
-	if (ords$name[i] == "DEra22-7523_1_moreOrders") next
 	rmd[titi] <- paste0("title: ", ords$cc[i])
 	rmd[ordi] <- paste0("ordnr <- '", ords$name[i], "'")
 	rmd[crpi] <- paste0("crop <- '", ords$crop[i], "'")

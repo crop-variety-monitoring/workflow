@@ -41,9 +41,9 @@ scrolltab <- function(data, caption, width="100%") {
 
 
 ```{r fileread, include=FALSE, cache=docache}
-ordnr <- "DEra22-7523_1_moreOrders"
-#"DCob22-7521_moreOrders"
-#"DRi23-7825"
+ordnr <- "order DRi23-7825"
+#"DRi23-7955_moreOrders"
+
 crop <- substr(ordnr, 2, 3)
 
 f1 <- list.files(file.path(dpath, "input"), 
@@ -125,7 +125,7 @@ There is a number of problems that can be encountered in a reference set.
 
 2) Some replicates of a variety are clearly in the wrong group. These were renamed to the group the belong to (the renamed references get an `*` appended to their name); 
 
-3) There can be multiple separate groups for the same variety that are genetically very distant. These are labeled `a`, `b`, etc (not implemented yet). 
+3) There can be multiple separate groups for the same variety that are genetically very distant. These are identified by appended labels `__a`, `__b`, etc. 
 
 Below is a dendrogram based on the Hamming distance and complete linkage clustering. The unit distance is the number of mutations that separate each reference. The labels are formatted as follows: `variety (sample_ID / inventory_ID) [number of IBS matches|number of DAP matches]`. 
 The matches and inventory_ID are ommited if there were none.The red line shows the cut off used when making new groups based on the distance matrix (not on this particular dendrogram representation). 
@@ -173,37 +173,41 @@ dc <- dendextend::set(dc, "labels_col", cols)
 
 #layout(cbind(1,2), c(0.7, 0.3))
 #par(mar=c(3, 1, 0, 9))
-par(mar=c(3, 1, 0, 25))
+par(mar=c(3, 0, 0, 35))
 plot(dendextend::highlight_branches_lwd(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6)
 
 maxcut = 250
-if (country == "Tanzania") {
+#if (country == "Tanzania") {
   if (crop=="rice") maxcut <- 50
-}
+#}
 
 # refine
 j <- match(colnames(dst), inf$sample)
-vars <- inf$variety[j]
+startvars <- vars <- inf$variety[j]
 v <- matchpoint:::var_dist(dst, vars)
 qth <- quantile(v)
+outh <- min(400, qth[4] + 1.5 * (qth[4] - qth[2]))
+if (outh < qth[5]) {
+  vars <- matchpoint:::break_far_relatives(dst, vars, outh)
+  v <- matchpoint:::var_dist(dst, vars)
+  qth <- quantile(v)
+}
 cut <- max(1, qth[2])
-startvars <- inf$variety[j]
-cr <- matchpoint:::clean_reference(dst, startvars, cut, nmax=100, verbose=FALSE) 
+cr <- matchpoint:::clean_reference(dst, vars, cut, nmax=100, verbose=FALSE) 
 
 j <- match(colnames(dst), cr$sample)
-vars <- gsub(" \\*", "", cr$to[j])
-v <- matchpoint:::var_dist(dst, vars)
+v <- matchpoint:::var_dist(dst, gsub(" \\*", "", cr$to[j]))
 cut <- min(maxcut, max(2, quantile(v)[3]))
 cr <- matchpoint:::clean_reference(dst, vars, cut, nmax=100, verbose=FALSE)
 
 j <- match(colnames(dst), cr$sample)
-vars <- gsub(" \\*", "", cr$to[j])
-v <- matchpoint:::var_dist(dst, vars)
+v <- matchpoint:::var_dist(dst, gsub(" \\*", "", cr$to[j]))
 cut <- min(maxcut, max(3, quantile(v)[4]))
 cr <- matchpoint:::clean_reference(dst, vars, cut, nmax=100, verbose=FALSE) 
 
 j <- match(labs, cr$sample)
-var1 <- gsub(" \\*", "", cr$to[j])
+#var1 <- gsub(" \\*", "", cr$to[j])
+var1 <- cr$to[j]
 var2 <- gsub(" \\*", "", var1)
 
 j <- match(labs, inf$sample)
@@ -286,7 +290,7 @@ boxplot(vibs, ylab="Dissimilarity within varieties\n(IBS)", las=1)
 
 ### Single genotype?
 
-In the case of diploid clonally propagated crops and inbreeding species, one would expect that, if a sample consisted of a single genotype, the counts for each heterozygous SNP variant would have a proportion of about 1. The "heterozygosity index" is the median score of these proportions for all heterozygous markers of a variety. Samples with less then 20% heterozygous markers are not considered.
+In the case of diploid clonally propagated crops and inbreeding species, one would expect that, if a sample consisted of a single genotype, the counts for each heterozygous SNP variant would have a ratio of about 1. The "heterozygosity index" is the median score of these ratios for all heterozygous markers of a variety. Samples with less then 20% heterozygous markers are not considered.
 
 ```{r purity, fig.width=4, fig.height=4, cache=FALSE}
 

@@ -11,7 +11,8 @@ editor_options:
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+is_html <- knitr::is_html_output()
+knitr::opts_chunk$set(echo=is_html)
 
 this <- system("hostname", TRUE)
 if (this == "LAPTOP-IVSPBGCA") { 
@@ -72,11 +73,17 @@ d <- lapply(1:length(dap), \(i) {
 })
 
 d1 <- lapply(1:length(dap1), \(i) na.omit(merge(ibs1[[i]], dap1[[i]], by="field_id", all.x=T)))
+
+GE <- ifelse(is_html, "≥", ">=")
+
+pdftxt <- ifelse(is_html, '<a href="compare_methods.pdf">pdf version</a>', "")
 ```
+
+`r pdftxt`
 
 ### Introduction
 
-Comparing the results obtained with IBS and DAP. We are only considering IBS scores ≥ 0.8.
+Comparing the results obtained with IBS and DAP. We are only considering IBS scores `r GE` 0.8.
 
 ### Best matches and correlation
 
@@ -93,13 +100,13 @@ y <- sapply(d1, \(x) {
 colnames(x) <- colnames(y) <- c("agreement", "n-obs")
 rownames(x) <- rownames(y) <- olabs
 
-knitr::kable(x, caption="IBS ≥ 0.8") |> 
+knitr::kable(x, caption=paste("IBS", GE, "0.8")) |> 
   kableExtra::kable_styling(full_width = FALSE)
 ```
 </div>
 <div class = "col-md-6">
 ```{r tab2}
-knitr::kable(y, caption="IBS ≥ 0.9") |> 
+knitr::kable(y, caption=paste("IBS", GE, "0.9")) |> 
   kableExtra::kable_styling(full_width = FALSE)
 ```
 </div></div>
@@ -107,7 +114,7 @@ knitr::kable(y, caption="IBS ≥ 0.9") |>
 
 ### Ranks
 
-Given the best match of a field sample to a reference sample in one method; what is the rank of that reference sample in other methods (for IBS ≥ 0.8)?
+Given the best match of a field sample to a reference sample in one method; what is the rank of that reference sample in other methods (for IBS `r GE` 0.8)?
 
 ```{r pressure, fig.width=12, fig.height=5}
 rank_plot <- function(z, add=FALSE, main="", ylab="") {
