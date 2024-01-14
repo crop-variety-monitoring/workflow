@@ -15,14 +15,16 @@ setwd(path)
 ff <- list.files("input", pattern="Counts.csv$", recursive=TRUE, full=TRUE)
 # skip teff for now. 
 #ff <- ff[!grepl("DEra22-7523", ff)]
+#ff = grep("ETH", ff, value=TRUE)
+#ff = grep("TZA", ff, value=TRUE)
+#ff = grep("NGA", ff, value=TRUE)
 
 
 for (i in 1:length(ff)) {
-
 	counts.file <- ff[i]
 	ordnr <- gsub("_Counts.csv", "", basename(counts.file))
-	filename <- file.path(gsub("input", "output/DAP2", counts.file))
-	filename <- gsub("_Counts.csv$", "_DAP2", filename)
+	filename <- file.path(gsub("input", "output/DAP", counts.file))
+	filename <- gsub("_Counts.csv$", "_DAP", filename)
 	print(filename)
 
 #	if (file.exists(paste0(filename, ".rds"))) next
@@ -39,5 +41,7 @@ for (i in 1:length(ff)) {
 
 	saveRDS(x, paste0(filename, ".rds"))
 	matchpoint:::DAP_write_excel(x, info, filename)
+	fpdf <- paste0(ordnr, "_ref_distance.pdf")
+	file.rename(fpdf, file.path("output/DAP", fpdf))
 }
 

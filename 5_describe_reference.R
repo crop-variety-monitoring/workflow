@@ -37,12 +37,12 @@ for (i in 1:nrow(ords)) {
 	writeLines(rmd, frmd)
 	outf <- paste0(ords$country[i], "_", ords$crop[i], "_reference")
 
-	if (dohtml) {
+#	if (dohtml) {
 		rmarkdown::render(frmd, "html_document", "temp", envir=new.env())
 		file.rename(gsub(".Rmd", ".html", frmd), file.path(dout, paste0(outf, ".html")))
-	} else {
+#	} else {
 		rmarkdown::render(frmd, "pdf_document", "temp", envir=new.env())
 		file.rename(gsub(".Rmd", ".pdf", frmd), file.path(dout, paste0(outf, ".pdf")))
-	}
+#	}
 }
 
