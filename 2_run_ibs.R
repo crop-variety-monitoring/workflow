@@ -14,9 +14,11 @@ setwd(path)
 
 ff <- list.files("input", pattern="SNP.csv$", recursive=TRUE, full=TRUE)
 markers <- matchpoint::marker_positions("")
+ff = rev(ff)
 
 for (f in ff) {
 	print(f)
+	cat("\n")
 	snps <- matchpoint::read_dart(f)
 	genotypes <- gsub("SNP.csv$", "variety-info.csv", f) |> data.table::fread() |> data.frame()
 	filename <- file.path(gsub("input", "output/IBS", dirname(f)), snps$order)

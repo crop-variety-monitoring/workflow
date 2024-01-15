@@ -110,16 +110,16 @@ This document describes the reference samples for `r crop` in `r country` (order
 
 There is a number of problems that can be encountered in a reference set. 
 
-1) Some varieties cannot be clearly separated with the SNP data. These were combined into a single variety, with the original names separated by ` # ` 
+1) Some varieties cannot be clearly separated with the SNP data. These were combined into a single variety, with the original names separated by ` # `. Combinations like `NERICA 1 # NERICA 2 # NERICA 3` are abbreviated to `NERICA 1*2*3` 
 
 2) Some replicates of a variety are clearly in the wrong group. These were renamed to the group the belong to (the renamed references get an `*` appended to their name); 
 
-3) There can be multiple separate groups for the same variety that are genetically very distant. These are identified by appended labels `__a`, `__b`, etc. 
+3) There can be multiple separate groups for the same variety that are genetically very distant. These are identified by appended labels `_a`, `_b`, `_c` etc. These suffixes are dropped if they are combined as under point 1. 
 
-Below is a dendrogram based on the IBS distance and complete linkage clustering. The unit distance is the number of mutations that separate each reference. The labels are formatted as follows: `variety (sample_ID / inventory_ID) [number of IBS matches|number of DAP matches]`. 
+Below is a dendrogram based on the IBS distance and complete linkage clustering. The unit distance is the number of mutations that separate each reference. The labels are formatted as follows: `variety (sample_ID / inventory_ID) [n IBS matches|n DAP matches]`. 
 The matches and inventory_ID are omitted if there were none.
 
-The blue and red lines show the cut offs used when making new groups based on the distance matrix (not on this particular dendrogram representation). If a variety has sub-groups that are further apart than the cut-off indicated by the blue line, they are split; unless they are nearest neighbors to each other, in which case they are kept together. Varieties below the red line are lumped together. This process is done iteratively, using thresholds based on the quantile distribution of the within-variety distances.
+The blue and red lines show the cut offs used when making new groups based on the distance matrix (not on this particular dendrogram representation). If a variety has sub-groups that are further apart than the cut-off indicated by the blue line, they are split; unless they are nearest neighbors to each other, in which case they are kept together. Varieties below the red line are lumped together.
 
 
 ```{r plotdendo2, fig.width=10, fig.height=nrow(inf)/8}
@@ -156,16 +156,8 @@ maxcut <- ifelse(crop=="rice", .5, .3)
 
 v1 <- matchpoint::self_dist(dst)
 
-pars <- data.frame(
-  			crop1=c("Ri", "Er", "Co", "Mz", "Cp", "Ca"),
-  			crop2=c("rice", "teff", "bean", "maize", "cowpea", "cassava"),
-				lump=c(.02,  .05, .025,  .04,  .04,   .1),
-			   split=c(  .1,   .2,   .2,   .2,   .2,   .2)
-			)
-
 # split and lump
-p <- pars[pars$crop1 == crop | pars$crop2 == crop, ]
-splum <- matchpoint:::split_lump(dst, p$lump, p$split) 
+splum <- matchpoint:::split_lump(dst, .01, .05) 
 
 k <- stats::order.dendrogram(dc)
 #var1 <- variety[k]

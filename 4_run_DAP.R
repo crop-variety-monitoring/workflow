@@ -13,12 +13,8 @@ if (host == "LAPTOP-IVSPBGCA") {
 setwd(path)
 
 ff <- list.files("input", pattern="Counts.csv$", recursive=TRUE, full=TRUE)
-# skip teff for now. 
-#ff <- ff[!grepl("DEra22-7523", ff)]
-#ff = grep("ETH", ff, value=TRUE)
-#ff = grep("TZA", ff, value=TRUE)
-#ff = grep("NGA", ff, value=TRUE)
-
+#i <- 9:10
+#ff <- ff[i]
 
 for (i in 1:length(ff)) {
 	counts.file <- ff[i]
@@ -30,7 +26,8 @@ for (i in 1:length(ff)) {
 #	if (file.exists(paste0(filename, ".rds"))) next
 	dir.create(dirname(filename), FALSE, TRUE)
 
-	info.file <- gsub("Counts.csv$", "variety-info.csv", counts.file)
+# ojo: using the fixed references 
+	info.file <- file.path("output/reference", gsub("Counts.csv$", "variety-info-fixed.csv", basename(counts.file)))
 	info <- matchpoint:::DAP_info(info.file)
 	tmpfile <- paste0(tempfile(), ".csv")
 	write.csv(info, tmpfile, na="")

@@ -38,24 +38,31 @@ for (i in 1:length(ff)) {
 	nrst <- matchpoint:::min_dist(dst)
 	nslf <- matchpoint:::min_self_dist(dst)
 	add <- paste0(" (", dcn, ")", 
-				" [", round(1000 * nrst$value), ", ", 
-						round(1000 * nslf$value), "]")
+				" [", round(10000 * nrst$value), ", ", 
+						round(10000 * nslf$value), "]")
+	
+	which(colnames(dibs)[cn] == "A2617")
 	
 # make dendro with original var names
 	dc <- matchpoint::group_dend(dst, add=add)
-
-	pars <- data.frame(
-				crop=c("Ri", "Er", "Co", "Mz", "Cp", "Ca"),
-				lump=c(.02,  .05, .025,  .04,  .04,   .1),
-			   split=c(  .1,   .2,   .2,   .2,   .2,   .2)
-			)
-
 # split and lump
-	p <- pars[pars$crop == crop, ]
-	splum <- matchpoint:::split_lump(dst, p$lump, p$split) 
+
+#	pars <- data.frame(
+#				crop=c("Ri", "Er", "Co", "Mz", "Cp", "Ca"),
+#				lump=c(.02,  .01,   .01,  .01,  .01,   .01),
+#			   split=c( .1,   .1,   .05,  .1,   .05,   .05)
+#			)
+#
+#	p <- pars[pars$crop == crop, ]
+#	mdst=dst; maxlump=p$lump; minsplit=p$split
+#	splum <- matchpoint:::split_lump(dst, p$lump, p$split) 
+
+	splum <- matchpoint:::split_lump(dst, .01, .05) 
 		
 # write output
-	out <- data.frame(sample=dcn, fixedvar=splum$new) 
+	out <- data.frame(sample=dcn, variety=splum$new) 
+	info$origvar <- info$variety
+	info$variety <- NULL
 	infout <- merge(info, out, by="sample", all.x=TRUE)
 	fout <- file.path("output/reference", gsub("_variety-info.csv", "_variety-info-fixed.csv", basename(finf)))
 	write.csv(infout, fout, row.names=FALSE, na="")

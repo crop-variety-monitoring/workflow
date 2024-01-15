@@ -13,12 +13,12 @@ if (host == "LAPTOP-IVSPBGCA") {
 
 setwd(gitpath)
 
-nga <- data.frame(country="NGA", get_varinfo("data-NGA/raw/dart/", FALSE))
-tza <- data.frame(country="TZA", order=NA, get_varinfo("data-TZA/raw/dart/", FALSE))
-eth <- data.frame(country="ETH", order=NA, get_varinfo("data-ETH/raw/dart/", FALSE))
+nga <- data.frame(country="NGA", matchpoint:::get_varinfo("data-NGA/raw/dart/", FALSE))
+tza <- data.frame(country="TZA", order=NA, matchpoint:::get_varinfo("data-TZA/raw/dart/", FALSE))
+eth <- data.frame(country="ETH", order=NA, matchpoint:::get_varinfo("data-ETH/raw/dart/", FALSE))
 
 x <- rbind(nga, tza, eth)
-x$variety <- fix_varnames(x$variety)
+x$variety <- matchpoint:::fix_varnames(x$variety)
 tab <- table(x$variety, x$country)
 d <- data.frame(tab[,1], tab[,2], tab[,3])
 colnames(d) <- colnames(tab)
@@ -32,6 +32,7 @@ test <- function(vars) {
 	uv <- gsub("-", "", uv)
 	nuv - length(unique(uv))
 }
+
 test(x$variety)
 
 
