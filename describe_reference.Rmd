@@ -41,7 +41,9 @@ scrolltab <- function(data, caption, width="100%") {
 
 
 ```{r fileread, include=FALSE, cache=docache}
-ordnr <- "DCas23-7954"
+ordnr <- "DRi23-7825"
+
+#"DCas23-7954"
 #"DRi23-7955_moreOrders"
 
 crop <- substr(ordnr, 2, 3)
@@ -64,9 +66,9 @@ dibs <- dibs[,-1] |> as.matrix()
 cn <- which(colnames(dibs) %in% inf$sample)
 dst <- dibs[cn, cn]
 
-all <- sum(inf$sample)
+all <- nrow(inf)
 inf <- inf[inf$sample %in% colnames(dibs), ]
-removed <- all - sum(inf$sample)
+removed <- all - nrow(inf)
 
 #? inf$inventory[is.na(inf$inventory)] <- inf$variety[is.na(inf$inventory)]
 
@@ -154,7 +156,16 @@ maxcut <- ifelse(crop=="rice", .5, .3)
 
 v1 <- matchpoint::self_dist(dst)
 
-splum <- matchpoint:::split_lump(dst, maxcut) 
+pars <- data.frame(
+  			crop1=c("Ri", "Er", "Co", "Mz", "Cp", "Ca"),
+  			crop2=c("rice", "teff", "bean", "maize", "cowpea", "cassava"),
+				lump=c(.02,  .05, .025,  .04,  .04,   .1),
+			   split=c(  .1,   .2,   .2,   .2,   .2,   .2)
+			)
+
+# split and lump
+p <- pars[pars$crop1 == crop | pars$crop2 == crop, ]
+splum <- matchpoint:::split_lump(dst, p$lump, p$split) 
 
 k <- stats::order.dendrogram(dc)
 #var1 <- variety[k]

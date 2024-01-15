@@ -37,22 +37,22 @@ for (i in 1:length(ff)) {
 	
 	nrst <- matchpoint:::min_dist(dst)
 	nslf <- matchpoint:::min_self_dist(dst)
-	add <- paste0(" [", round(nrst$value, 3), ", ", 
-						round(nslf$value, 3), "]"))
+	add <- paste0(" (", dcn, ")", 
+				" [", round(1000 * nrst$value), ", ", 
+						round(1000 * nslf$value), "]")
 	
 # make dendro with original var names
-	dc <- matchpoint::group_dend(dst, add=paste0(" (", dcn, ")", ndst))
+	dc <- matchpoint::group_dend(dst, add=add)
 
-
-	maxcut <- ifelse(crop=="Ri", .035, 
-				ifelse(crop=="Er", .05,
-				ifelse(crop=="Co", .025,
-				ifelse(crop=="Mz", .04,
-				ifelse(crop=="Cp", .04,
-				.1)))))
+	pars <- data.frame(
+				crop=c("Ri", "Er", "Co", "Mz", "Cp", "Ca"),
+				lump=c(.02,  .05, .025,  .04,  .04,   .1),
+			   split=c(  .1,   .2,   .2,   .2,   .2,   .2)
+			)
 
 # split and lump
-	splum <- matchpoint:::split_lump(dst, maxcut) 
+	p <- pars[pars$crop == crop, ]
+	splum <- matchpoint:::split_lump(dst, p$lump, p$split) 
 		
 # write output
 	out <- data.frame(sample=dcn, fixedvar=splum$new) 
