@@ -22,7 +22,7 @@ for (f in ff) {
 	snps <- matchpoint::read_dart(f)
 	genotypes <- gsub("SNP.csv$", "variety-info.csv", f) |> data.table::fread() |> data.frame()
 	filename <- file.path(gsub("input", "output/IBS", dirname(f)), snps$order)
-	out <- matchpoint::match_IBS(snps, genotypes, markers, filename=filename, threads=4, verbose=TRUE)
+	out <- matchpoint::match_IBS(snps, genotypes, markers, filename=filename, threads=4, verbose=F)
 	cat("\n\n")
 }
 

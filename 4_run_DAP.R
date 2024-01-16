@@ -13,7 +13,7 @@ if (host == "LAPTOP-IVSPBGCA") {
 setwd(path)
 
 ff <- list.files("input", pattern="Counts.csv$", recursive=TRUE, full=TRUE)
-#i <- 9:10
+#i <- 10
 #ff <- ff[i]
 
 for (i in 1:length(ff)) {
@@ -27,14 +27,15 @@ for (i in 1:length(ff)) {
 	dir.create(dirname(filename), FALSE, TRUE)
 
 # ojo: using the fixed references 
-	info.file <- file.path("output/reference", gsub("Counts.csv$", "variety-info-fixed.csv", basename(counts.file)))
+	info.file <- file.path("output/reference", gsub("Counts.csv$", "variety-info-refined.csv", basename(counts.file)))
 	info <- matchpoint:::DAP_info(info.file)
+	stopifnot(all(!grepl("\\*$", info$RefType)))
 	tmpfile <- paste0(tempfile(), ".csv")
 	write.csv(info, tmpfile, na="")
 
 	x <- dartVarietalID::runSampleAnalysis(counts.file,
             info.file = tmpfile, ncores = parallel::detectCores() - 1,
-            pop.size = 10, dis.mat = TRUE, na.perc.threshold = 50)
+            pop.size = 10, dis.mat=TRUE, na.perc.threshold = 50)
 
 	saveRDS(x, paste0(filename, ".rds"))
 	matchpoint:::DAP_write_excel(x, info, filename)

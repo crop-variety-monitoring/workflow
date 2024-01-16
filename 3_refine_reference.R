@@ -14,6 +14,8 @@ setwd(path)
 dir.create("output/reference", FALSE, FALSE)
 ff <- list.files("output", pattern="IBS.xlsx$", recursive=TRUE, full=TRUE)
 
+#ff = grep("Mz", ff, value=TRUE)
+
 for (i in 1:length(ff)) {
 	
 	print(ff[i]); flush.console()
@@ -35,37 +37,42 @@ for (i in 1:length(ff)) {
 	variety <- rinf$variety[j]
 	dimnames(dst) <- list(variety, variety)
 	
+	if (!all(is.na(rinf$inventory[j]))) {
+		add1 <- paste0("  (", rinf$sample[j], " / ", rinf$inventory[j],") ")
+	} else {
+		add1 <- paste0("  (", rinf$sample[j], ") ")
+	}
+	
+	
 	nrst <- matchpoint:::min_dist(dst)
 	nslf <- matchpoint:::min_self_dist(dst)
-	add <- paste0(" (", dcn, ")", 
-				" [", round(10000 * nrst$value), ", ", 
+	add2 <- paste0(" [", round(10000 * nrst$value), ", ", 
 						round(10000 * nslf$value), "]")
 	
-	which(colnames(dibs)[cn] == "A2617")
-	
+
 # make dendro with original var names
-	dc <- matchpoint::group_dend(dst, add=add)
+	dc <- matchpoint::group_dend(dst, add=paste0(add1, add2))
 # split and lump
 
-#	pars <- data.frame(
-#				crop=c("Ri", "Er", "Co", "Mz", "Cp", "Ca"),
-#				lump=c(.02,  .01,   .01,  .01,  .01,   .01),
-#			   split=c( .1,   .1,   .05,  .1,   .05,   .05)
-#			)
-#
-#	p <- pars[pars$crop == crop, ]
-#	mdst=dst; maxlump=p$lump; minsplit=p$split
-#	splum <- matchpoint:::split_lump(dst, p$lump, p$split) 
+	pars <- data.frame(
+				crop=c("Ri", "Er", "Co", "Mz", "Cp", "Ca"),
+				lump=c(.01,  .01,   .01,  .05,  .01,   .01),
+			   split=c(.05,  .05,   .05,  .15, .05,   .05)
+			)
 
-	splum <- matchpoint:::split_lump(dst, .01, .05) 
+	p <- pars[pars$crop == crop, ]
+#	mdst=dst; maxlump=p$lump; minsplit=p$split
+	splum <- matchpoint:::split_lump(dst, p$lump, p$split) 
+
+#	splum <- matchpoint:::split_lump(dst, .01, .05) 
 		
 # write output
 	out <- data.frame(sample=dcn, variety=splum$new) 
 	info$origvar <- info$variety
 	info$variety <- NULL
 	infout <- merge(info, out, by="sample", all.x=TRUE)
-	fout <- file.path("output/reference", gsub("_variety-info.csv", "_variety-info-fixed.csv", basename(finf)))
-	write.csv(infout, fout, row.names=FALSE, na="")
+	fout <- file.path("output/reference", gsub("_variety-info.csv", "_variety-info-refined.csv", basename(finf)))
+#	write.csv(infout, fout, row.names=FALSE, na="")
 
 # make plot
 	dimnames(dst) <- list(splum$new, splum$new)
@@ -81,11 +88,12 @@ for (i in 1:length(ff)) {
 	fpdf <- gsub(".csv$", ".pdf", fout)
 	pdf(fpdf, height=nrow(rinf)/8)
 		par(mar=c(3, 0, 0, 20))
-		plot(dendextend::highlight_branches_lwd(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6, xlim=c(0.4, 0))
+		plot(dendextend::highlight_branches_lwd(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6, xlim=c(
+0.4, 0))
 		pd <- diff(par("usr")[1:2]) * .5 
 		text(cbind(pd, 1:length(var2)), labels=var2, col=cols2, pos=4, xpd=TRUE, cex=0.5)
 		text(0, length(var2)+2, labels="Original name", pos=4, xpd=TRUE, cex=1)
-		text(pd, length(var2)+2, labels="Fixed name", pos=4, xpd=TRUE, cex=1)
+		text(pd, length(var2)+2, labels="Revised name", pos=4, xpd=TRUE, cex=1)
 		text(-pd, length(var2)+2, labels=paste0(country, ", ", crop), xpd=TRUE, cex=1)
 
 		lines(cbind(splum$lump, c(0, length(variety))), col=rgb(1,0,0,0.5), lwd=1)

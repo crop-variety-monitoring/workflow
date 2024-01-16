@@ -46,18 +46,18 @@ crop <- substr(ordnr, 2, 3)
 f1 <- list.files(file.path(dpath, "input"), 
               pattern=paste0(ordnr, "_SNP.csv"), recursive=TRUE, full=TRUE)
 stopifnot(length(f1) == 1)
-f2 <- gsub("_SNP.csv$", "_SNP_2row.csv", f1)
-fc <- gsub("_SNP.csv$", "_Counts.csv", f1)
 
 dirn <- dirname(f1)
 country <- substr(dirn, nchar(dirn)-2, nchar(dirn))
 
 inf <- read.csv(gsub("SNP", "variety-info", f1))
 dart1 <- matchpoint::read_dart(f1)
-dart2 <- matchpoint::read_dart(f2)
-dartc <- matchpoint::read_dart(fc)
 
-cns <- colnames(dart1$snp)[-1]
+#f2 <- gsub("_SNP.csv$", "_SNP_2row.csv", f1)
+#fc <- gsub("_SNP.csv$", "_Counts.csv", f1)
+#dart2 <- matchpoint::read_dart(f2)
+#dartc <- matchpoint::read_dart(fc)
+#cns <- colnames(dart1$snp)[-1]
 
 
 fxl <- gsub("_SNP.csv", "_IBS.xlsx", f1)
@@ -110,6 +110,97 @@ pdftxt <- ifelse(is_html, paste0('<a href="', country, "_", crop, '_results.pdf"
 
 This page describes the IBS results for `r crop` in `r country` (order `r ordnr`). 
 
+
+### Matches
+
+```{r gatherref}
+ibs <- bibs[bibs$IBS > 0.8,]
+bm <- as.data.frame(table(ibs$variety))
+bm <- bm[rev(order(bm$Freq)), ]
+bm$perc <- round(100 * bm$Freq / nrow(bibs), 1)
+colnames(bm) <- c("variety", "number of matches", "% of samples")
+
+vars <- na.omit(ibs$variety)
+vars <- vars[vars != ""]
+```
+
+`r nrow(ibs)` (`r round(100*nrow(ibs)/nrow(bibs), 1)`%) of the field samples were matched to a reference sample with an IBS score >= 0.8. The reference sample had `r length(unique(vars))` different varieties;`r nrow(bm)` of these varieties were matched to at least one field sample. The most frequently matched variety was `r bm[1,1]` which was found `r bm[1,2]` times. 
+
+<div class = "row">
+<div class = "col-md-6">
+
+
+</div>
+```{r vars, fig.width=4.5, fig.height=5}
+x <- (1:nrow(bibs))/nrow(bibs)
+plot(x, sort(bibs$IBS), ylab="IBS score", xlab="Field samples (fraction)", pch=20, col="red", las=1, cex=.5)
+grid()
+```
+<div class = "col-md-6">
+```{r tabmatch}
+p8 <- round(100 * sum(bibs$IBS >= 0.8) / nrow(bibs), 1)
+bm[,1] <- as.character(bm[,1])
+add <- bm[1, ]
+add[1,1] <- "not matched"
+add[1,2] <- nrow(bibs) - sum(bibs$IBS >= 0.8)
+add[1,3] <- 100 - p8
+bm = rbind(bm, add)
+bm = bm[rev(order(bm[,2])), ]
+scrolltab(bm, "Number of matched field samples by reference variety")
+```
+</div></div>
+
+</br>
+`r p8`% of the field samples had a IBS match of at least 0.8. 
+</br>
+
+
+```{r plotmatch, fig.height=3.5, fig.width=4}
+lab <- as.character(bm[,1])
+lab[bm[,2] < 15] <- ""
+
+par(mar=c(4, 4, 0, 1), mfrow=c(1,2))
+
+x <- (1:nrow(bibs))/nrow(bibs)
+plot(x, sort(bibs$IBS), ylab="IBS score", xlab="Field samples (fraction)", pch=20, col="red", las=1, cex=.5)
+grid()
+
+plot(bm[,2], las=1, cex=.4, col="red", pch=20, ylab="nuber of matches", xlab="order")
+text(1:nrow(bm), bm[,2], lab, cex=.5, xpd=TRUE, pos=4, col="blue")
+```
+
+
+### Identify unmatched varieties
+
+```{r plotdendo2, fig.width=12, fig.height=nrow(bibs)/24}
+j <- match(colnames(dibs), ibs$field_id)
+vars <- ibs$variety[j]
+score <- ibs$IBS[j] |> round(2)
+k <- is.na(score)
+score[k] <- ""
+score[!k] <- paste0("  [", score[!k], "]")
+
+infr <- inf[inf$reference, ]
+#j <- match(labs, infr$sample)
+j <- match(colnames(dibs), infr$sample)
+refs <- infr$variety[j]
+isref <- !is.na(refs)
+vars[isref] <- refs[isref]
+vars[is.na(vars)] <- ""
+
+vars[isref] <- paste0("-- ref -- ", vars[isref])
+vars <- paste0(vars, score)
+
+ds <- as.matrix(dibs)
+dimnames(ds) <- list(vars, vars)
+dc <- matchpoint::group_dend(ds, score)
+
+par(mar=c(0, 3, 1, 7))
+plot(dendextend::highlight_branches_lwd(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6)
+abline(v=0.2, col="red")
+```
+
+
 ### Sample size 
 
 We had data for `r nr` SNPs and `r nc` samples (`r sum(inf$reference)` references and `r sum(!inf$reference)` field samples). `r msnp` markers (`r msnpp`%) had a missing rate that was higher than 0.5. After removing these, we had `r nr1` SNPs left. `r sinf` remaining markers were informative in the sense that they showed variation between genotypes leaving us with `r sinfp`% of the original number of markers. `r mgs` genotypes (`r mgp`%) had a missing rate that was higher than 0.5. After removing these, we had `r ncol(snp1)` genotypes left (`r nref` references and `r nfld` field samples).
@@ -130,92 +221,3 @@ grid()
 ktab(sd2, "Variation across genotypes in SNP markers")
 ```
 </div></div>
-
-
-### Matches
-
-```{r gatherref}
-ibs <- bibs[bibs$IBS > 0.8,]
-bm <- as.data.frame(table(ibs$variety))
-bm <- bm[rev(order(bm$Freq)), ]
-bm$perc <- round(100 * bm$Freq / nrow(bibs), 1)
-colnames(bm) <- c("variety", "number of matches", "% of samples")
-
-vars <- na.omit(ibs$variety)
-vars <- vars[vars != ""]
-```
-
-`r nrow(ibs)` (`r round(100*nrow(ibs)/nrow(bibs), 1)`%) of the field samples were matched to a reference sample with an IBS score >= 0.8. The reference sample had `r length(unique(vars))` different varieties;`r nrow(bm)` of these varieties were matched to at least one field sample. The most frequently matched variety was `r bm[1,1]` which was found `r bm[1,2]` times. 
-
-<div class = "row">
-<div class = "col-md-6">
-```{r plotmatch, fig.height=5.5, fig.width=6}
-lab <- as.character(bm[,1])
-lab[bm[,2] < 15] <- ""
-par(mar=c(4, 4, 0, 1))
-plot(bm[,2], las=1, cex=.4, col="red", pch=20, ylab="nuber of matches", xlab="order")
-text(1:nrow(bm), bm[,2], lab, cex=.5, xpd=TRUE, pos=4, col="blue")
-```
-</div>
-<div class = "col-md-6">
-```{r tabmatch}
-p8 <- round(100 * sum(bibs$IBS >= 0.8) / nrow(bibs), 1)
-bm[,1] <- as.character(bm[,1])
-add <- bm[1, ]
-add[1,1] <- "not matched"
-add[1,2] <- nrow(bibs) - sum(bibs$IBS >= 0.8)
-add[1,3] <- 100 - p8
-bm = rbind(bm, add)
-bm = bm[rev(order(bm[,2])), ]
-scrolltab(bm, "Number of matched field samples by reference variety")
-```
-</div></div>
-
-</br>
-`r p8`% of the field samples had a IBS match of at least 0.8. 
-
-```{r vars, fig.width=4.5, fig.height=4.5}
-x <- (1:nrow(bibs))/nrow(bibs)
-plot(x, sort(bibs$IBS), ylab="IBS score", xlab="Field samples (fraction)", pch=20, col="red", las=1, cex=.5)
-grid()
-```
-
-### Identify unmatched varieties
-
-```{r plotdendo2, fig.width=12, fig.height=nrow(bibs)/24}
-#cn <- which(colnames(dibs) %in% bibs$field_id)
-#dst <- as.dist(dibs[cn, cn])
-dst <- as.dist(dibs)
-hc <- hclust(dst)
-labs <- hc$labels[hc$order]
-j <- match(labs, ibs$field_id)
-vars <- ibs$variety[j]
-score <- ibs$IBS[j] |> round(2)
-k <- is.na(score)
-score[k] <- ""
-score[!k] <- paste0("  [", score[!k], "]")
-
-infr <- inf[inf$reference, ]
-j <- match(labs, infr$sample)
-refs <- infr$variety[j]
-isref <- !is.na(refs)
-vars[isref] <- refs[isref]
-vars[is.na(vars)] <- ""
-
-
-set.seed(1)
-rc <- sample(viridis::turbo(length(unique(vars))))
-cols <- rep(NA, length(vars))
-cols <- rc[ as.integer(as.factor(vars)) ]
-vars[isref] <- paste0("-- ref -- ", vars[isref])
-vars <- paste0(vars, score)
-
-dc <- as.dendrogram(hc)
-dc <- dendextend::set(dc, "labels", vars)
-dc <- dendextend::set(dc, "labels_cex", 0.3)
-dc <- dendextend::set(dc, "labels_col", cols)
-par(mar=c(0, 3, 1, 7))
-plot(dendextend::highlight_branches_lwd(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6)
-abline(v=0.2, col="red")
-```
-
