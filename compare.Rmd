@@ -5,6 +5,7 @@ output:
   html_document:
     df_print: paged
     code_folding: hide
+  pdf_document: default
 editor_options:
   chunk_output_type: console
 ---
@@ -49,6 +50,7 @@ dap <- lapply(fdap, \(f) {
     if (!is.null(exclude)) {
     	x <- x[!(x$field_id %in% exclude), ]
     }
+	x$variety <- gsub("_", " ", x$variety)
     x
 })
 #ham <- lapply(fham, \(f) readxl::read_excel(f, "HAM_variety") |> data.frame())

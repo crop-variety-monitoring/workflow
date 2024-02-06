@@ -55,8 +55,7 @@ dirn <- dirname(fc)
 country <- substr(dirn, nchar(dirn)-2, nchar(dirn))
 dartc <- matchpoint::read_dart(fc)
 
-inf <- read.csv(file.path(dpath, "output/reference", gsub("_Counts", "_variety-info-refined", basename(fc))))
-
+inf <- read.csv(gsub("_Counts", "_variety-info", fc))
 inf <- inf[inf$reference,]
 
 fxl <- gsub("input", "output/IBS", gsub("_Counts.csv", "_IBS.xlsx", fc))
@@ -92,6 +91,8 @@ if (!file.exists(fdap)) {
   fdap <- gsub("DAP/", "DAPraw/", fdap)
 }
 bdap <- readxl::read_excel(fdap, "res_summary") |> data.frame()
+bdap$variety <- gsub("_", " ", bdap$variety)
+
 best <- merge(bibs[, c("field_id", "IBS", "ref_id", "variety")], bdap[, c("field_id", "ref_id", "variety")], by="field_id")
 best <- best[best$IBS >= 0.8, ]
 colnames(best) <- gsub("\\.x$", ".IBS", colnames(best))
@@ -156,18 +157,18 @@ dc <- matchpoint::group_dend(dst, add)
 par(mar=c(3, 0, 0, 35))
 plot(dendextend::highlight_branches_lwd(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6)
 
-maxcut <- ifelse(crop=="rice", .5, .3)
+maxcut <- ifelse(crp=="rice", .5, .3)
 
 v1 <- matchpoint::self_dist(dst)
 
 # split and lump
 	pars <- data.frame(
-				crop=c("Ri", "Er", "Co", "Mz", "Cp", "Ca"),
+				crp=c("Ri", "Er", "Co", "Mz", "Cp", "Ca"),
 				lump=c(.01,  .01,   .01,  .05,  .01,   .01),
 			   split=c(.05,  .05,   .05,  .15, .05,   .05)
 			)
 
-	p <- pars[pars$crop == crp, ]
+	p <- pars[pars$crp == crp, ]
 	splum <- matchpoint:::split_lump(dst, p$lump, p$split) 
 
 k <- stats::order.dendrogram(dc)
@@ -250,8 +251,7 @@ y <- matchpoint:::punity(dst, seq(0, 0.5, .01))
 
 plotpu <- function(x, main="") {
   # we want the last which.max
-  x <- x[nrow(x):1, ]
-  i <- which.max(rowSums(x[,-1]))
+  i <- nrow(x) - which.max(rev(x[,"mean"])) + 1
   b <- x[i, 1]
   by <- mean(unlist(x[i,-1]))
   plot(x[,1:2], xlab="IBS distance", ylab="score", type="b", col="red", 
