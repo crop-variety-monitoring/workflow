@@ -39,8 +39,10 @@ fibs <- gsub("DAP", "IBS", fdap)
 ibs <- lapply(fibs, \(f) {
     d <- readxl::read_excel(f, "IBS_variety") |> data.frame()
     d <- d[d$IBS >= 0.8, ]
+	  d$matchvar <- gsub(" ", "_", d$variety)
     d
 })
+
 
 dap <- lapply(fdap, \(f) {
     x <- readxl::read_excel(f, "res_full") |> data.frame()
@@ -50,9 +52,11 @@ dap <- lapply(fdap, \(f) {
     if (!is.null(exclude)) {
     	x <- x[!(x$field_id %in% exclude), ]
     }
-	x$variety <- gsub("_", " ", x$variety)
+	x$matchvar <- x$variety
+	x$variety <- NULL
     x
 })
+
 #ham <- lapply(fham, \(f) readxl::read_excel(f, "HAM_variety") |> data.frame())
 
 orders <- gsub("_IBS.xlsx", "", basename(fibs))
@@ -95,10 +99,10 @@ What is the proportion of field samples to which both methods assign the same re
 <div class = "col-md-6">
 ```{r match_high, fig.width=12, fig.height=5}
 
-x <- sapply(d1, \(x) { c(sum(x$variety.x == x$variety.y) / nrow(x), nrow(x)) }) |> t() |> round(2)
+x <- sapply(d1, \(x) { c(sum(x$matchvar.x == x$matchvar.y) / nrow(x), nrow(x)) }) |> t() |> round(2)
 y <- sapply(d1, \(x) { 
   x <- x[x$IBS > 0.9, ]
-  c(sum(x$variety.x == x$variety.y) / nrow(x), nrow(x)) })  |> t() |> round(2)
+  c(sum(x$matchvar.x == x$matchvar.y) / nrow(x), nrow(x)) })  |> t() |> round(2)
 colnames(x) <- colnames(y) <- c("agreement", "n-obs")
 rownames(x) <- rownames(y) <- olabs
 
@@ -146,8 +150,8 @@ for (i in 1:n) {
    ylab <- ifelse(i %in% c(1,6), "fraction of samples", "")
    ib <- ibs[[i]]
    ib1 <- ibs1[[i]]
-   z1 <- merge(dap1[[i]], ib, by=c("field_id", "variety"), all.x=TRUE)
-   z2 <- merge(ib1, dap[[i]], by=c("field_id", "variety"), all.x=TRUE)
+   z1 <- merge(dap1[[i]], ib, by=c("field_id", "matchvar"), all.x=TRUE)
+   z2 <- merge(ib1, dap[[i]], by=c("field_id", "matchvar"), all.x=TRUE)
    rank_plot(z1, main=olabs[i], ylab=ylab)
    rank_plot(z2, TRUE)
 }
@@ -161,8 +165,8 @@ Each dot is the number of calls for a reference variety by either method. The bl
 
 ```{r besties, fig.width=12, fig.height=5}
 m <- lapply(d1, \(x) {
-  ibs <- as.data.frame(table(x$variety.x))
-  dap <- as.data.frame(table(x$variety.y))
+  ibs <- as.data.frame(table(x$matchvar.x))
+  dap <- as.data.frame(table(x$matchvar.y))
   m <- merge(ibs, dap, by=1, all=TRUE)
   m[is.na(m)] <- 0
   colnames(m)[2:3] <- c("IBS", "DAP")
