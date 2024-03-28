@@ -16,12 +16,11 @@ markers <- matchpoint::marker_positions("")
 
 for (f in ff) {
 	print(f)
-	cat("\n")
 	snps <- matchpoint::read_dart(f)
-	fgeno <- file.path("output/reference", gsub("Counts.csv$", "variety-info-refined.csv", basename(f)))
-	genotypes <- data.table::fread(fgeno) |> data.frame()
+	genotypes <- gsub("Counts.csv$", "variety-info.csv", f) |> data.table::fread() |> data.frame()
+#	fgeno <- file.path("output/reference", gsub("Counts.csv$", "variety-info-refined.csv", basename(f)))
+#	genotypes <- data.table::fread(fgeno) |> data.frame()
 	filename <- file.path(gsub("input", "output/CDS", dirname(f)), snps$order)
-	out <- matchpoint::match_CDS(snps, genotypes, markers, filename=filename)
-	cat("\n\n")
+	out <- matchpoint:::match_CDS(snps, genotypes, markers, filename=filename)
 }
 
