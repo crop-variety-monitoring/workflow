@@ -41,10 +41,10 @@ for (i in 1:nrow(ords)) {
 
 	if (dohtml) {
 		rmarkdown::render(frmd, "html_document", "temp", envir=new.env())
-		file.rename(gsub(".Rmd", ".html", frmd), file.path(dout, "CDS", paste0(outf, ".html")))
+		file.rename(gsub(".Rmd", ".html", frmd), file.path(dout, "CDS", paste0(outf, "_CDS.html")))
 	} else {
 		rmarkdown::render(frmd, "pdf_document", "temp", envir=new.env())
-		file.rename(gsub(".Rmd", ".pdf", frmd), file.path(dout, "CDS", paste0(outf, ".pdf")))
+		file.rename(gsub(".Rmd", ".pdf", frmd), file.path(dout, "CDS", paste0(outf, "_CDS.pdf")))
 	}
 }
 
