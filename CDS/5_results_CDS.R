@@ -9,9 +9,11 @@ if (this == "LAPTOP-IVSPBGCA") {
 setwd(file.path(gitpath, "workflow"))
 
 dout <- file.path(path, "results/html")
-dir.create(dout, FALSE, TRUE)
+dir.create(file.path(dout, "CDS"), FALSE, TRUE)
 
 rmd <- readLines("results.Rmd")
+rmd <- gsub("IBS", "CDS", rmd))
+
 ords <- matchpoint:::order_names()
 ords <- ords[rev(order(ords$cc)), ]
 
@@ -39,10 +41,10 @@ for (i in 1:nrow(ords)) {
 
 	if (dohtml) {
 		rmarkdown::render(frmd, "html_document", "temp", envir=new.env())
-		file.rename(gsub(".Rmd", ".html", frmd), file.path(dout, paste0(outf, ".html")))
+		file.rename(gsub(".Rmd", ".html", frmd), file.path(dout, "CDS", paste0(outf, ".html")))
 	} else {
 		rmarkdown::render(frmd, "pdf_document", "temp", envir=new.env())
-		file.rename(gsub(".Rmd", ".pdf", frmd), file.path(dout, paste0(outf, ".pdf")))
+		file.rename(gsub(".Rmd", ".pdf", frmd), file.path(dout, "CDS", paste0(outf, ".pdf")))
 	}
 }
 
