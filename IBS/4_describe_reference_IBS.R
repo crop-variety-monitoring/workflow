@@ -11,7 +11,7 @@ setwd(file.path(gitpath, "workflow"))
 dout <- file.path(path, "results/html")
 dir.create(file.path(dout, "IBS"), FALSE, TRUE)
 
-rmd <- readLines("describe_reference.Rmd")
+rmd <- readLines("RMD/describe_reference.Rmd")
 ords <- matchpoint:::order_names()
 ords <- ords[rev(order(ords$cc)), ]
 

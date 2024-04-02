@@ -13,7 +13,7 @@ dir.create(file.path(dout, "CDS"), FALSE, TRUE)
 
 
 rmd <- readLines("RMD/describe_reference.Rmd")
-rmd <- gsub("IBS", "CDS", rmd))
+rmd <- gsub("IBS", "CDS", rmd)
 
 ords <- matchpoint:::order_names()
 ords <- ords[rev(order(ords$cc)), ]
