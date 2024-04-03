@@ -9,16 +9,19 @@ if (this == "LAPTOP-IVSPBGCA") {
 setwd(file.path(gitpath, "workflow"))
 dout <- file.path(path, "results/html")
 
-for (method in c("IBS", "CDS")) {
+for (method in c("IBS", "CDS", "DAP")) {
 
 	dir.create(file.path(dout, method), FALSE, TRUE)
 
-	rmd <- readLines("RMD/results.Rmd")
-	rmd <- gsub("IBS", method, rmd)
-
+	if (method == "DAP") {
+		rmd <- readLines("RMD/results_DAP.Rmd")
+	} else {
+		rmd <- readLines("RMD/results.Rmd")
+		rmd <- gsub("IBS", method, rmd)
+	}
+	
 	ords <- matchpoint:::order_names()
 	ords <- ords[rev(order(ords$cc)), ]
-
 	titi <- grep("title: ", rmd)
 	ordi <- grep("ordnr <- ", rmd)
 	crpi <- grep("crop <- ", rmd)
@@ -39,7 +42,7 @@ for (method in c("IBS", "CDS")) {
 		dir.create(fpath, FALSE, TRUE)
 		frmd <- file.path(fpath, "temp.Rmd")
 		writeLines(rmd, frmd)
-		outf <- paste0(ords$country[i], "_", ords$crop[i], "_results", method)
+		outf <- paste0(ords$country[i], "_", ords$crop[i], "_results_", method)
 
 		if (dohtml) {
 			rmarkdown::render(frmd, "html_document", "temp", envir=new.env())
