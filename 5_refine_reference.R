@@ -26,8 +26,7 @@ for (method in c("IBS", "CDS")) {
 		dirn <- dirname(ff[i])
 		country <- substr(dirn, nchar(dirn)-2, nchar(dirn))
 
-		finf <- gsub("output/IBS", "input", gsub("_IBS.xlsx", "_variety-info.csv", ff[i]))
-		finf <- gsub("IBS", method, finf)
+		finf <- gsub("output/...", "input", gsub("_....xlsx", "_variety-info.csv", ff[i]))
 		
 		info <- read.csv(finf)
 		rinf <- info[info$reference,]
@@ -93,8 +92,7 @@ for (method in c("IBS", "CDS")) {
 		fpdf <- gsub(".csv$", ".pdf", fout)
 		pdf(fpdf, height=nrow(rinf)/8)
 			par(mar=c(3, 0, 0, 20))
-			plot(dendextend::highlight_branches_lwd(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6, xlim=c(
-	0.4, 0))
+			plot(dendextend::highlight_branches_lwd(dc), horiz=TRUE, nodePar=list(cex=.1), cex=.6, xlim=c(0.4, 0))
 			pd <- diff(par("usr")[1:2]) * .5 
 			text(cbind(pd, 1:length(var2)), labels=var2, col=cols2, pos=4, xpd=TRUE, cex=0.5)
 			text(0, length(var2)+2, labels="Original name", pos=4, xpd=TRUE, cex=1)
@@ -109,3 +107,19 @@ for (method in c("IBS", "CDS")) {
 
 	}
 }
+
+
+
+
+
+f <- function(pars, ds) {
+	if (pars[2] > max(ds)) return(Inf)
+	if (pars[2] >= pars[1]) return(Inf)
+	if (pars[2] < 0) return(Inf)
+	splum <- matchpoint:::split_lump(ds, pars[1], pars[2]) 
+	dimnames(ds) <- list(splum$new, splum$new)
+	y <- matchpoint:::punity(ds, seq(0, 0.5, .01))
+	1- max(y[,4])
+}	
+#f(c(.15, .05), dst)
+#optim(c(.15, .05), f, dst)
