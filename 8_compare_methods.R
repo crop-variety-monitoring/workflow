@@ -6,14 +6,20 @@ if (this == "LAPTOP-IVSPBGCA") {
 } else if (this == "DESKTOP-M2BA7AA") {
 	path <- "google drive path"
 }
-setwd(file.path(gitpath, "workflow"))
+setwd(file.path(gitpath, "workflow/RMD"))
 
 dout <- file.path(path, "results/html")
 dir.create(dout, FALSE, FALSE)
 
-rmarkdown::render("compare.Rmd", "html_document")
-file.copy("compare.html", file.path(dout, "compare_methods.html"), overwrite=TRUE)
+rmarkdown::render("compare_IBS-DAP.Rmd", "html_document")
+file.copy("compare_IBS-DAP.html", file.path(dout, "compare_IBS-DAP.html"), overwrite=TRUE)
+
+rmarkdown::render("compare_IBS-DAP.Rmd", "pdf_document")
+file.copy("compare_IBS-DAP.pdf", file.path(dout, "compare_IBS-DAP.pdf"), overwrite=TRUE)
 
 
-rmarkdown::render("compare.Rmd", "pdf_document")
-file.copy("compare.pdf", file.path(dout, "compare_methods.pdf"), overwrite=TRUE)
+rmarkdown::render("compare_IBS-CDS.Rmd", "html_document")
+file.copy("compare_IBS-CDS.html", file.path(dout, "compare_IBS-CDS.html"), overwrite=TRUE)
+
+rmarkdown::render("compare_IBS-CDS.Rmd", "pdf_document")
+file.copy("compare_IBS-CDS.pdf", file.path(dout, "compare_IBS-CDS.pdf"), overwrite=TRUE)

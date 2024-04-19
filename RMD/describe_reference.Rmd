@@ -100,14 +100,14 @@ colnames(best) <- gsub("\\.y$", ".DAP", colnames(best))
 
 
 #hits <- merge(data.frame(table(best[, "variety.x"])), data.frame(table(best[, "variety.y"])), by=1)
-pdftxt <- ifelse(is_html, paste0('<a href="', country, "_", crop, '_reference.pdf">pdf version</a>'), "")
+pdftxt <- ifelse(is_html, paste0('<a href="', country, "_", crop, "_reference_", method, '.pdf">pdf version</a>'), "")
 ```
 
 `r pdftxt`
 
 ### Introduction
 
-This document describes the reference samples for `r crop` in `r country` (order `r ordnr`). There were `r sum(inf$reference)` samples `r ifelse(removed > 0, paste0("(after removing ", removed, " sample(s) for having more than 50% missing data)"), "")`, representing `r nvars` varieties. On average, there were 
+This document describes the reference samples for `r crop` in `r country` (order `r ordnr`) using IBS. There were `r sum(inf$reference)` samples `r ifelse(removed > 0, paste0("(after removing ", removed, " sample(s) for having more than 50% missing data)"), "")`, representing `r nvars` varieties. On average, there were 
 `r ndups` samples for each reference variety, `r techdups` samples from the same source ("inventory"; "technical duplicates") and `r biodups` samples from different sources ("biological duplicates").  
 
 
@@ -124,7 +124,7 @@ There is a number of problems that can be encountered in a reference set.
 Below is a dendrogram based on the IBS distance and complete linkage clustering. The unit distance is the number of mutations that separate each reference. The labels are formatted as follows: `variety (sample_ID / inventory_ID) [n IBS matches|n DAP matches]`. 
 The matches and inventory_ID are omitted if there were none.
 
-The blue and red lines show the cut offs used when making new groups based on the distance matrix (not on this particular dendrogram representation). If a variety has sub-groups that are further apart than the cut-off indicated by the blue line, they are split; unless they are nearest neighbors to each other, in which case they are kept together. Varieties below the red line are lumped together.
+The blue and red lines show the cut offs used when making new groups based on the distance matrix (not on this particular dendrogram representation). If a variety has sub-groups that are further apart than the cut-off indicated by the blue line, they are split; unless they are nearest neighbors to each other, in which case they are kept together. Varieties that have distance that is lower than the distance indicated by the red line are lumped together.
 
 
 ```{r plotdendo2, fig.width=10, fig.height=nrow(inf)/8}

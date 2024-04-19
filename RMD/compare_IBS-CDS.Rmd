@@ -1,0 +1,201 @@
+---
+title: "Matching methods comparison"
+date: "Compiled on `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    df_print: paged
+    code_folding: hide
+  pdf_document: default
+editor_options:
+  chunk_output_type: console
+---
+
+
+```{r setup, include=FALSE}
+is_html <- knitr::is_html_output()
+knitr::opts_chunk$set(echo=is_html)
+
+this <- system("hostname", TRUE)
+if (this == "LAPTOP-IVSPBGCA") { 
+	dpath <- "G:/.shortcut-targets-by-id/1mfeEftF_LgRcxOT98CBIaBbYN4ZHkBr_/share/image"
+} else if (this == "DESKTOP-M2BA7AA") {
+	dpath <- "google drive path"
+}
+
+scrolltab <- function(data, caption) {
+kableExtra::kbl(data, caption=caption) |>
+    kableExtra::kable_classic(full_width = F,  position = "right") |>
+    kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))  |> 
+    kableExtra::scroll_box(width = "100%", height = "400px")
+}
+
+```
+
+
+```{r fileread, include=FALSE, cache=TRUE}
+fcds <- list.files(file.path(dpath, "output/CDS"), pattern="xlsx$", recursive=TRUE, full=TRUE)
+fcds <- fcds[!grepl("~", fcds)]
+fibs <- gsub("CDS", "IBS", fcds)
+ibs <- lapply(fibs, \(f) {
+    d <- readxl::read_excel(f, "IBS_variety") |> data.frame()
+    d <- d[d$IBS >= 0.8, ]
+	  d$matchvar <- gsub(" ", "_", d$variety)
+    d
+})
+
+cds <- lapply(fcds, \(f) {
+    d <- readxl::read_excel(f, "CDS_variety") |> data.frame()
+    d <- d[d$CDS >= 0.8, ]
+	  d$matchvar <- gsub(" ", "_", d$variety)
+    d
+})
+
+orders <- gsub("_IBS.xlsx", "", basename(fibs))
+onms <- matchpoint:::order_names()
+olabs <- onms$cc[match(orders, onms$name)]
+
+get1 <- function(x) {
+  x <- x[x$var_rank == 1, ]
+  x$var_rank <- NULL
+  x
+}
+ibs1 <- lapply(ibs, get1)
+cds1 <- lapply(cds, get1)
+
+d <- lapply(1:length(cds), \(i) {
+#    if (grepl("DEra22-7523", fcds[i])) {
+#       ibs[[i]]$ref_id <- gsub("_D.$", "", ibs[[i]]$ref_id)
+#    }
+    merge(ibs[[i]], cds[[i]], by=c("field_id", "ref_id"))
+})
+
+d1 <- lapply(1:length(cds1), \(i) na.omit(merge(ibs1[[i]], cds1[[i]], by="field_id", all.x=T)))
+
+GE <- ifelse(is_html, "≥", ">=")
+
+pdftxt <- ifelse(is_html, '<a href="compare_methods_ibs-cds.pdf">pdf version</a>', "")
+```
+
+`r pdftxt`
+
+### Introduction
+
+Comparing the results obtained with IBS and CDS. We are only considering IBS scores `r GE` 0.8.
+
+### Best matches and correlation
+
+What is the proportion of field samples to which both methods assign the same reference variety?
+
+<div class = "row">
+<div class = "col-md-6">
+```{r match_high, fig.width=12, fig.height=5}
+
+x <- sapply(d1, \(x) { c(sum(x$matchvar.x == x$matchvar.y) / nrow(x), nrow(x)) }) |> t() |> round(2)
+y <- sapply(d1, \(x) { 
+  x <- x[x$IBS > 0.9, ]
+  c(sum(x$matchvar.x == x$matchvar.y) / nrow(x), nrow(x)) })  |> t() |> round(2)
+colnames(x) <- colnames(y) <- c("agreement", "n-obs")
+rownames(x) <- rownames(y) <- olabs
+
+knitr::kable(x, caption=paste("IBS", GE, "0.8")) |> 
+  kableExtra::kable_styling(full_width = FALSE)
+```
+</div>
+<div class = "col-md-6">
+```{r tab2}
+knitr::kable(y, caption=paste("IBS", GE, "0.9")) |> 
+  kableExtra::kable_styling(full_width = FALSE)
+```
+</div></div>
+
+
+### Ranks
+
+Given the best match of a field sample to a reference sample in one method; what is the rank of that reference sample in other methods (for IBS `r GE` 0.8)?
+
+```{r pressure, fig.width=12, fig.height=5}
+rank_plot <- function(z, add=FALSE, main="", ylab="") {
+	M = c("IBS", "CDS")
+	#z$var_rank[is.na(z$var_rank)] <- max(z$var_rank, na.rm=TRUE)
+	z <- na.omit(z)
+	if (add) {
+		lines(sort(z$var_rank), (1:nrow(z))/nrow(z), lwd=2, col="red")
+		legend("bottomright", legend=paste(rev(M), "#1, ranked by", M),
+		       col=c("blue", "red"), lwd=c(4,2), cex=.75)
+	} else {
+		plot(sort(z$var_rank), (1:nrow(z))/nrow(z), 
+		     xlab="Rank by other algorithm", 
+			   ylab=ylab, axes=FALSE,
+			   xlim=c(0, 10), yaxs="i", xaxs="i",
+			   las=1, type="l", lwd=4, col="blue", main=main)
+	   axis(1, 0:10)
+	   axis(2, (0:10)/10, las=1)
+	   grid(10,10)
+	  grid()
+	}
+}
+n <- length(cds1)
+par(mfrow=c(2, 5), mar=c(4,4,2,0))
+
+for (i in 1:n) {
+   ylab <- ifelse(i %in% c(1,6), "fraction of samples", "")
+   ib <- ibs[[i]]
+   ib1 <- ibs1[[i]]
+   z1 <- merge(cds1[[i]], ib, by=c("field_id", "matchvar"), all.x=TRUE)
+   z2 <- merge(ib1, cds[[i]], by=c("field_id", "matchvar"), all.x=TRUE)
+   rank_plot(z1, main=olabs[i], ylab=ylab)
+   rank_plot(z2, TRUE)
+}
+
+```
+
+
+### Variety counts 
+
+Each dot is the number of calls for a reference variety by either method. The blue line is *y=x*. That is where the dots would be if there were no matching differences between the two methods. 
+
+```{r besties, fig.width=12, fig.height=5}
+m <- lapply(d1, \(x) {
+  ibs <- as.data.frame(table(x$matchvar.x))
+  cds <- as.data.frame(table(x$matchvar.y))
+  m <- merge(ibs, cds, by=1, all=TRUE)
+  m[is.na(m)] <- 0
+  colnames(m)[2:3] <- c("IBS", "CDS")
+  m
+})
+
+par(mfrow=c(2, 5), mar=c(4,4,2,0))
+for (i in 1:length(m)) {
+   left <- i %in% c(1,6)
+   lim <- c(0, max(unlist(m[[i]][,-1])))
+   plot(m[[i]][,-1], xlab="n (IBS)", ylab=ifelse(left, "n (CDS)", ""), 
+        main=olabs[i], pch=20, col="red", las=1, cex=2, xpd=TRUE, xlim=lim, ylim=lim)
+   grid()
+   abline(0,1, col="blue")
+}
+```
+
+
+
+### Distribution of best match scores 
+
+For ease of visualization, CDS scores < 0.5 are not shown.
+
+```{r match_scores, fig.width=12, fig.height=5}
+par(mfrow=c(2, 5), mar=c(4,4,2,0))
+for (i in 1:length(d1)) {
+  y <- na.omit(d1[[i]])
+  x <- (1:nrow(y))/nrow(y)
+
+  left <- i %in% c(1,6)
+  plot(x, sort(y$IBS), xlab="Fraction of samples", ylab=ifelse(left, "score", ""), las=1, ylim=c(0.5, 1), type="l", lwd=2, col="blue", main=olabs[i])
+grid()
+lines(x, sort(y$CDS), col="red", lwd=2)
+if (i==1) {
+  legend("topleft", legend=c("IBS", "CDS"), lwd=2, col=c("blue", "red"), cex=.9)
+}
+}
+```
+
+</br>
+

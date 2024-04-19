@@ -64,6 +64,7 @@ dart1 <- matchpoint::read_dart(f1)
 
 fxl <- gsub("_SNP.csv", "_IBS.xlsx", f1)
 fxl <- gsub("input", "output/IBS", fxl)
+isCDS <- grepl("CDS", fxl)
 dibs <- readxl::read_excel(fxl, "distance") |> data.frame(check.names=FALSE)
 rownames(dibs) <- dibs[,1]
 dibs <- dibs[,-1]
@@ -106,7 +107,7 @@ sref <- colnames(snp1) %in% inf$sample[inf$reference]
 
 mgs <- ifelse(mg == 0, "No", mg)
 
-pdftxt <- ifelse(is_html, paste0('<a href="', country, "_", crop, '_results.pdf">pdf version</a>'), "")
+pdftxt <- ifelse(is_html, paste0('<a href="', country, "_", crop, "_results_", method, '.pdf">pdf version</a>'), "")
 GE <- ifelse(is_html, "≥", ">=")
 
 get_bm <- function(ibs, n) {
@@ -137,11 +138,19 @@ This page describes the IBS results for `r crop` in `r country` (order `r ordnr`
 ```{r gatherref}
 ibs8 <- bibs[bibs$IBS > 0.8,]
 
-ibsthr <- data.frame(
+if (isCDS) {
+	thr <- data.frame(
 		crp=c("Ri", "Er", "Co", "Mz", "Cp", "Ca"),
- 	  thr=c(.05,  .07,  .03,   .08,  .05,  .1))
+		thr=c(.05,  .06,  .06,  .055, .04,  .135)
+	)
+} else {
+	thr <- data.frame(
+		crp=c("Ri", "Er", "Co", "Mz", "Cp", "Ca"),
+		thr=c(.05,  .07,  .03,   .08,  .05,  .1)
+	)
+}	
 
-crpth <- 1 - ibsthr$thr[ibsthr$crp==crp]
+crpth <- 1 - thr$thr[thr$crp==crp]
 ibst <- bibs[bibs$IBS > crpth,]
 
 bm8 <- get_bm(ibs8, nrow(bibs))

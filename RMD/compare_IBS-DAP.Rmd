@@ -82,7 +82,7 @@ d1 <- lapply(1:length(dap1), \(i) na.omit(merge(ibs1[[i]], dap1[[i]], by="field_
 
 GE <- ifelse(is_html, "≥", ">=")
 
-pdftxt <- ifelse(is_html, '<a href="compare_methods.pdf">pdf version</a>', "")
+pdftxt <- ifelse(is_html, '<a href="compare_methods_ibs-dap.pdf">pdf version</a>', "")
 ```
 
 `r pdftxt`

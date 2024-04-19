@@ -17,7 +17,7 @@ ff <- list.files("input", pattern="Counts.csv$", recursive=TRUE, full=TRUE)
 #ff <- ff[i]
 
 #for (i in 1:length(ff)) {
-for (i in 10) {
+for (i in 2) {
 	counts.file <- ff[i]
 	ordnr <- gsub("_Counts.csv", "", basename(counts.file))
 	filename <- file.path(gsub("input", "output/DAPnew", counts.file))
