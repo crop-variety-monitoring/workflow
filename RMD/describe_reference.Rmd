@@ -100,7 +100,7 @@ colnames(best) <- gsub("\\.y$", ".DAP", colnames(best))
 
 
 #hits <- merge(data.frame(table(best[, "variety.x"])), data.frame(table(best[, "variety.y"])), by=1)
-pdftxt <- ifelse(is_html, paste0('<a href="', country, "_", crop, "_reference_", method, '.pdf">pdf version</a>'), "")
+pdftxt <- ifelse(is_html, paste0('<a href="', country, "_", crop, "_reference_IBS", '.pdf">pdf version</a>'), "")
 ```
 
 `r pdftxt`
@@ -240,7 +240,7 @@ scrolltab(changed, "", width="50%")
 
 ### Unison / purity tradeoff
 
-Purity is the fraction of clusters with one variety. Unison is the fraction of varieties that are in a single cluster. The gray line shows at which IBS threshold their mean is highest, and the mean value as in parenthesis (ideally this value would be 1). This may be an estimate of the optional threshold for assignment of variety names to field samples. 
+Purity is the fraction of clusters that contain a single variety. Unison is the fraction of varieties that are grouped into a single cluster. The gray line shows at which threshold the mean of these two statistics is highest. The mean value is shown in parenthesis (ideally this value would be 1). This may be an estimate of the optional threshold for assignment of variety names to field samples. 
 
 ```{r unipur, fig.width=9, fig.height=4}
 par(mfrow=c(1,2), mar=c(4,4,2,2))
@@ -261,10 +261,16 @@ plotpu <- function(x, main="") {
   text(0.46, 0, "purity", cex=1, pos=3, col="red")
   abline(v=b, lty=2, col="gray", lwd=2)
   text(b, 0, paste0(round(b, 2), " (", round(by, 2), ")"), col="gray", pos=4)
+  b
 }
 
-plotpu(x, "Before cleaning")
-plotpu(y, "After cleaning")
+raw <- plotpu(x, "Before cleaning")
+out <- plotpu(y, "After cleaning")
+
+out <- data.frame(
+  threshold = out,
+  max_same_dist = max(v$value)  
+)
 ```
 
 </br>
@@ -286,6 +292,10 @@ boxplot(v~id, data=vv, ylab="Dissimilarity within varieties\n(IBS)", las=1, col=
 
 boxplot(nn, ylab="Distance to nearest other variety\n(IBS)", las=1, col="yellow", cex=.5)
 
+out$min_other_dist=qnn[1]
+out$q05_other_dist=quantile(nn, .05)
+out$q10_other_dist=quantile(nn, .1)
+write.csv(out, paste0(ordnr, "_IBS_stats.csv"))
 ```
 
 The lowest observed distance *between* two different varieties was `r qnn[1]`, the median distance to the nearest other variety was `r qnn[3]` and the largest distance between a variety and its nearest genetic neighbor in the reference set was `r qnn[5]`

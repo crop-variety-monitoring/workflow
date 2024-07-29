@@ -6,6 +6,7 @@ if (this == "LAPTOP-IVSPBGCA") {
 } else if (this == "DESKTOP-M2BA7AA") {
 	path <- "google drive path"
 }
+
 setwd(file.path(gitpath, "workflow"))
 
 dout <- file.path(path, "results/html")
