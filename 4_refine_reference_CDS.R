@@ -18,7 +18,7 @@ filename = ""
 pars <- data.frame(
 	crop=c("Ri", "Er", "Co", "Mz", "Cp", "Ca"),
 	lump=c(.01,  .01,   .01,  .05,  .01,   .01),
-	split=c(.05,  .05,   .05,  .3, .05,   .05)
+	split=c(.05,  .05,   .3,  .3, .05,   .05)
 )
 
 
@@ -29,7 +29,7 @@ for (f in ff) {
 	stopifnot(nrow(p) == 1)
 	snps <- matchpoint::read_dart(f)
 	genotypes <- gsub("Counts.csv$", "variety-info.csv", f) |> data.table::fread() |> data.frame()	
-	filename <- file.path(gsub("input", "output/CDS/refine", dirname(f)), paste0(snps$order, "_refine"))
+	filename <- file.path(gsub("input", "output/CDS/refine", dirname(f)), paste0(snps$order, "_refine_CDS"))
 	match_field <- c("sample", "target.id")[grepl("ETH", f)+1]	
 	out <- matchpoint:::refine_CDS(snps, genotypes, match_field=match_field, ref_split=p$split, ref_lump=p$lump, filename=filename)
 }

@@ -11,7 +11,9 @@ setwd(file.path(gitpath, "workflow"))
 
 dout <- file.path(path, "results/html")
 
-for (method in c("IBS", "CDS")) {
+#for (method in c("IBS", "CDS")) {
+for (method in c("IBS")) {
+
 	dir.create(file.path(dout, method), FALSE, TRUE)
 
 	rmd <- readLines("RMD/describe_reference.Rmd")
@@ -19,6 +21,7 @@ for (method in c("IBS", "CDS")) {
 
 	ords <- matchpoint:::order_names()
 	ords <- ords[rev(order(ords$cc)), ]
+	ords <- ords[ords$crop != "teff", ]
 
 	titi <- grep("title: ", rmd)
 	ordi <- grep("ordnr <- ", rmd)

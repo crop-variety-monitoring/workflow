@@ -62,8 +62,8 @@ dart1 <- matchpoint::read_dart(f1)
 #cns <- colnames(dart1$snp)[-1]
 
 
-fxl <- gsub("_SNP.csv", "_IBS.xlsx", f1)
-fxl <- gsub("input", "output/IBS", fxl)
+fxl <- gsub("_SNP.csv", "_match_IBS.xlsx", f1)
+fxl <- gsub("input", "output/IBS/match", fxl)
 isCDS <- grepl("CDS", fxl)
 dibs <- readxl::read_excel(fxl, "distance") |> data.frame(check.names=FALSE)
 rownames(dibs) <- dibs[,1]
@@ -106,7 +106,7 @@ nfld <- sum(!inf$reference[m])
 sref <- colnames(snp1) %in% inf$sample[inf$reference]
 
 mgs <- ifelse(mg == 0, "No", mg)
-
+method <- if (isCDS) "CDS" else "IBS"
 pdftxt <- ifelse(is_html, paste0('<a href="', country, "_", crop, "_results_", method, '.pdf">pdf version</a>'), "")
 GE <- ifelse(is_html, "≥", ">=")
 
@@ -234,12 +234,12 @@ x <- do.call(rbind, x)
 
 i <- match(k, x$group)
 x <- x[i,]
-hc <- dendextend::set(hc, "labels", x$lab)
-hc <- dendextend::set(hc, "labels_cex", .4)
+#hc <- dendextend::set(hc, "labels", x$lab)
+#hc <- dendextend::set(hc, "labels_cex", .4)
 
-par(mar=c(4,0,0,8))
-plot(dendextend::highlight_branches_lwd(hc), horiz=TRUE, nodePar=list(cex=.1), cex=.4)
-abline(v=1-crpth, col="red")
+#par(mar=c(4,0,0,8))
+#plot(dendextend::highlight_branches_lwd(hc), horiz=TRUE, nodePar=list(cex=.1), cex=.4)
+#abline(v=1-crpth, col="red")
 ```
 
 

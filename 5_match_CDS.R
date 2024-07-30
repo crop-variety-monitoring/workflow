@@ -19,12 +19,11 @@ for (f in ff) {
 	print(f)
 	match_field <- c("sample", "target.id")[grepl("ETH", f)+1]	
 	snps <- matchpoint::read_dart(f)
-	fgeno <- gsub("input", "output/IBS/refine", f)
-	fgeno <- gsub("_Counts.csv$", "_refine.xlsx", fgeno)
+	fgeno <- gsub("input", "output/IBS/refine", gsub("_Counts.csv$", "_refine.xlsx", f))
 	genotypes <- suppressWarnings(readxl::read_excel(fgeno, sheet="genotypes")) |> data.frame()
 	filename <- file.path(gsub("input", "output/CDS/match", dirname(f)), snps$order)
 	out <- matchpoint:::match_CDS(snps, genotypes, match_field=match_field, filename=filename)
 }
 
-# x = snps; method = "cor"; snp_mr=0.2; CDS_cutoff=0.5; mincounts=NULL; assign_threshold=NULL; verbose=FALSE; filename=""
+	# x = snps; method = "cor"; snp_mr=0.2; CDS_cutoff=0.5; mincounts=NULL; assign_threshold=NULL; verbose=FALSE; filename=""; sample_mr=.2; snp_mr=.2
 

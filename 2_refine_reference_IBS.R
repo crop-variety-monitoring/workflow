@@ -31,8 +31,10 @@ for (f in ff) {
 	stopifnot(nrow(p) == 1)
 	snps <- matchpoint::read_dart(f)
 	genotypes <- gsub("SNP.csv$", "variety-info.csv", f) |> data.table::fread() |> data.frame()	
-	filename <- file.path(gsub("input", "output/IBS/refine", dirname(f)), paste0(snps$order, "_refine"))
 	match_field <- c("sample", "target.id")[grepl("ETH", f)+1]
+
+	filename <- file.path(gsub("input", "output/IBS/refine", dirname(f)), paste0(snps$order, "_IBS_refine"))
+
 	out <- matchpoint::refine_IBS(snps, genotypes, match_field=match_field, markers, ref_split=p$split, ref_lump=p$lump, filename=filename, threads=4, verbose=FALSE)
 }
 

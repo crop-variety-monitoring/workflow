@@ -9,7 +9,8 @@ if (this == "LAPTOP-IVSPBGCA") {
 setwd(file.path(gitpath, "workflow"))
 dout <- file.path(path, "results/html")
 
-for (method in c("IBS", "CDS", "DAP")) {
+#for (method in c("IBS", "CDS", "DAP")) {
+for (method in c("IBS")) {
 
 	dir.create(file.path(dout, method), FALSE, TRUE)
 
