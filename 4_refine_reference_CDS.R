@@ -12,6 +12,7 @@ if (this == "LAPTOP-IVSPBGCA") {
 
 setwd(path)
 ff <- list.files("input", pattern="_Counts.csv$", recursive=TRUE, full=TRUE)
+ff <- ff[-grep("DEra22", ff)]
 ff <- rev(ff)
 f = ff[4]
 filename = ""

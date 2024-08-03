@@ -9,8 +9,8 @@ if (this == "LAPTOP-IVSPBGCA") {
 setwd(file.path(gitpath, "workflow"))
 dout <- file.path(path, "results/html")
 
+method = "IBS"
 #for (method in c("IBS", "CDS", "DAP")) {
-for (method in c("IBS")) {
 
 	dir.create(file.path(dout, method), FALSE, TRUE)
 
@@ -28,6 +28,9 @@ for (method in c("IBS")) {
 	crpi <- grep("crop <- ", rmd)
 	cnti <- grep("country <- ", rmd)
 
+# for now
+	ords <- ords[ords$crop != "teff", ]
+	
 	#caci <- grep("docache <-", rmd)
 	#rmd[caci] <- "docache <- FALSE"
 
@@ -53,4 +56,4 @@ for (method in c("IBS")) {
 			file.rename(gsub(".Rmd", ".pdf", frmd), file.path(dout, method, paste0(outf, ".pdf")))
 		}
 	}
-}
+#}

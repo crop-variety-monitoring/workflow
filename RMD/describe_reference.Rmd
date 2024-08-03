@@ -41,9 +41,9 @@ scrolltab <- function(data, caption, width="100%") {
 
 
 ```{r fileread, include=FALSE, cache=docache}
-ordnr <- "DCas23-7954"
+ordnr <- "DMz23-8837_DMz23-8838"
+#"DCas23-7954"
 #"DRi23-7825"
-#"DRi23-7955_moreOrders"
 
 crop <- substr(ordnr, 2, 3)
 crp <- substr(ordnr, 2, 3)
@@ -104,7 +104,8 @@ biodups <- round(mean(tab2), 2)
 #hits <- merge(data.frame(table(best[, "variety.x"])), data.frame(table(best[, "variety.y"])), by=1)
 pdftxt <- ifelse(is_html, paste0('<a href="', country, "_", crop, "_reference_IBS", '.pdf">pdf version</a>'), "")
 
-genos <- readxl::read_excel(fxl, "genotypes") |> data.frame()
+genos <- readxl::read_excel(fxl, "genotypes", col_types = "text") |> data.frame()
+genos$reference <- as.logical(genos$reference)
 genos <- genos[!is.na(genos$variety), ]
 porg <- readxl::read_excel(fxl, "punity_original") |> data.frame()
 pref <- readxl::read_excel(fxl, "punity_refined") |> data.frame()
@@ -137,7 +138,8 @@ The matches and inventory_ID are omitted if there were none.
 The blue and red lines show the cut offs used when making new groups based on the distance matrix (not on this particular dendrogram representation). If a variety has sub-groups that are further apart than the cut-off indicated by the blue line, they are split; unless they are nearest neighbors to each other, in which case they are kept together. Varieties that have distance that is lower than the distance indicated by the red line are lumped together.
 
 
-```{r plotdendo2, fig.width=10, fig.height=nrow(inf)/8}
+```{r plotdendo2, fig.width=10, fig.height=nrow(inf)/8} 
+
 dcn <- colnames(dst)
 k <- match(dcn, genos[[match_field]])
 

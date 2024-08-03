@@ -41,7 +41,7 @@ scrolltab <- function(data, caption, width="100%") {
 
 
 ```{r fileread, include=FALSE, cache=docache}
-ordnr <- "DCas23-7954"
+ordnr <- "DMz23-8837_DMz23-8838" #DCas23-7954"
 crop <- substr(ordnr, 2, 3)
 crp <- substr(ordnr, 2, 3)
 
@@ -51,6 +51,7 @@ stopifnot(length(f1) == 1)
 
 dirn <- dirname(f1)
 country <- substr(dirn, nchar(dirn)-2, nchar(dirn))
+match_field <- if (country == "Ethiopia") "target.id" else  "sample" 
 
 inf <- read.csv(gsub("SNP", "variety-info", f1))
 dart1 <- matchpoint::read_dart(f1)
@@ -68,7 +69,7 @@ isCDS <- grepl("CDS", fxl)
 dibs <- readxl::read_excel(fxl, "distance") |> data.frame(check.names=FALSE)
 rownames(dibs) <- dibs[,1]
 dibs <- dibs[,-1]
-fld <- colnames(dibs) %in% inf$sample[!inf$reference]
+fld <- colnames(dibs) %in% inf[[match_field]][!inf$reference]
 fdibs <- dibs[fld, fld]
 
 bibs <- readxl::read_excel(fxl, "best_match") |> data.frame()
@@ -100,10 +101,10 @@ mrg <- colSums(is.na(snp1)) / nrow(snp1)
 mg <- sum(mrg > .5)
 mgp <- round(100 * mg / length(mrg), 1)
 snp1 <- snp1[, mrg <= 0.5]
-m <- match(colnames(snp1), inf$sample)
+m <- match(colnames(snp1), inf[[match_field]])
 nref <- sum(inf$reference[m])
 nfld <- sum(!inf$reference[m])
-sref <- colnames(snp1) %in% inf$sample[inf$reference]
+sref <- colnames(snp1) %in% inf[[match_field]][inf$reference]
 
 mgs <- ifelse(mg == 0, "No", mg)
 method <- if (isCDS) "CDS" else "IBS"
@@ -276,8 +277,8 @@ score[k] <- ""
 score[!k] <- paste0("  [", score[!k], "]")
 
 infr <- inf[inf$reference, ]
-#j <- match(labs, infr$sample)
-j <- match(colnames(dibs), infr$sample)
+#j <- match(labs, infr[[match_field]])
+j <- match(colnames(dibs), infr[[match_field]])
 refs <- infr$variety[j]
 isref <- !is.na(refs)
 vars[isref] <- refs[isref]

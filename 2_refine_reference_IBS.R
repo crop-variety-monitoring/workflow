@@ -38,5 +38,5 @@ for (f in ff) {
 	out <- matchpoint::refine_IBS(snps, genotypes, match_field=match_field, markers, ref_split=p$split, ref_lump=p$lump, filename=filename, threads=4, verbose=FALSE)
 }
 
-# x = snps; MAF_cutoff=0.05; SNP_Missing_Rate=0.2; Ref_Missing_Rate=0.2; Sample_Missing_Rate=0.2; Ref_Heterozygosity_Rate = 0.1; Sample_Heterozygosity_Rate=0.1; Inb_method = "mom.visscher"; threads=1; verbose=FALSE; filename=""; ref_split=0.1; ref_lump=0.05; match_field="sample"; sample_mr=NULL; snp_mr=NULL
+# x = snps; MAF_cutoff=0.05; SNP_Missing_Rate=0.2; Ref_Missing_Rate=0.2; Sample_Missing_Rate=0.2; Ref_Heterozygosity_Rate = 0.1; Sample_Heterozygosity_Rate=0.1; Inb_method = "mom.visscher"; threads=1; verbose=FALSE; filename=""; ref_split=0.1; ref_lump=0.05; sample_mr=NULL; snp_mr=NULL
 
