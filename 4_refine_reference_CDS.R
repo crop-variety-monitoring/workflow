@@ -12,9 +12,8 @@ if (this == "LAPTOP-IVSPBGCA") {
 
 setwd(path)
 ff <- list.files("input", pattern="_Counts.csv$", recursive=TRUE, full=TRUE)
-ff <- ff[-grep("DEra22", ff)]
-ff <- rev(ff)
-f = ff[4]
+f = ff[2]
+
 filename = ""
 pars <- data.frame(
 	crop=c("Ri", "Er", "Co", "Mz", "Cp", "Ca"),
@@ -31,7 +30,7 @@ for (f in ff) {
 	snps <- matchpoint::read_dart(f)
 	genotypes <- gsub("Counts.csv$", "variety-info.csv", f) |> data.table::fread() |> data.frame()	
 	filename <- file.path(gsub("input", "output/CDS/refine", dirname(f)), paste0(snps$order, "_refine_CDS"))
-	match_field <- c("sample", "target.id")[grepl("ETH", f)+1]	
+	match_field <- c("sample", "targetID")[grepl("ETH", f)+1]	
 	out <- matchpoint:::refine_CDS(snps, genotypes, match_field=match_field, ref_split=p$split, ref_lump=p$lump, filename=filename)
 }
 

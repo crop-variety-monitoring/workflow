@@ -15,18 +15,15 @@ setwd(path)
 ff <- list.files("input", pattern="SNP.csv$", recursive=TRUE, full=TRUE)
 markers <- matchpoint::marker_positions("")
 
-f = ff[2]
 ff = rev(ff)
 
 for (f in ff) {
 	print(f)
 	snps <- matchpoint::read_dart(f)
 	fgeno <- gsub("input", "output/IBS/refine", f)
-	fgeno <- gsub("_SNP.csv$", "_IBS_refine.xlsx", fgeno)
-	genotypes <- readxl::read_excel(fgeno, sheet="genotypes", col_types = "text") |> data.frame()
-	genotypes$reference <- as.logical(genotypes$reference)
-	match_field <- c("sample", "target.id")[grepl("ETH", f)+1]	
-
+	fgeno <- gsub("_SNP.csv$", "_refine_IBS_variety-info.csv", fgeno)
+	genotypes <- read.csv(fgeno)
+	match_field <- c("sample", "targetID")[grepl("ETH", f)+1]	
 	filename <- file.path(gsub("input", "output/IBS/match/", dirname(f)), paste0(snps$order, "_match"))
 
 	out <- matchpoint::match_IBS(snps, genotypes, match_field=match_field, markers, filename=filename, threads=4, verbose=FALSE)

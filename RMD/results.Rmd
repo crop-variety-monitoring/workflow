@@ -41,7 +41,7 @@ scrolltab <- function(data, caption, width="100%") {
 
 
 ```{r fileread, include=FALSE, cache=docache}
-ordnr <- "DMz23-8837_DMz23-8838" #DCas23-7954"
+ordnr <- "DCas23-7954"
 crop <- substr(ordnr, 2, 3)
 crp <- substr(ordnr, 2, 3)
 
@@ -51,7 +51,7 @@ stopifnot(length(f1) == 1)
 
 dirn <- dirname(f1)
 country <- substr(dirn, nchar(dirn)-2, nchar(dirn))
-match_field <- if (country == "Ethiopia") "target.id" else  "sample" 
+match_field <- if (country == "Ethiopia") "targetID" else  "sample" 
 
 inf <- read.csv(gsub("SNP", "variety-info", f1))
 dart1 <- matchpoint::read_dart(f1)
@@ -76,7 +76,7 @@ bibs <- readxl::read_excel(fxl, "best_match") |> data.frame()
 bibs <- na.omit(bibs)
 
 ### compute 
-snp1 <- dart1$snp[,-1]
+snp1 <- dart1$snp
 nr <- nrow(snp1)
 nc <- ncol(snp1)
 
@@ -216,25 +216,25 @@ grid()
 
 
 ```{r assign, fig.width=6, fig.height=25}
-cut <- 1-crpth
-dm <- matchpoint:::cut.dm(fdibs, cut)
-hc <- hclust(dist(dm[[1]])) |> as.dendrogram()
-k <- stats::order.dendrogram(hc)
-g <- merge(dm[[2]], ibst[, c("field_id", "variety")], by.x="labels", by.y="field_id", all.x=TRUE)
-ug <- unique(g$group)
-x <- lapply(ug, \(i) {
-  v <- g$variety[g$group==i]
-  n <- length(v)
-  n2 <- sum(is.na(v))
-  v <- paste0(sort(unique(v)), collapse = "; ")
-  v <- gsub("^; ", "", v)
-  out <- paste0(c(n, v), collapse=", ")
-  data.frame(group=i, n=n, lab=gsub(", $", "", out))
-}) 
-x <- do.call(rbind, x)
+#cut <- 1-crpth
+#dm <- matchpoint:::cut.dm(fdibs, cut)
+#hc <- hclust(dist(dm[[1]])) |> as.dendrogram()
+#k <- stats::order.dendrogram(hc)
+#g <- merge(dm[[2]], ibst[, c("field_id", "variety")], by.x="labels", by.y="field_id", all.x=TRUE)
+#ug <- unique(g$group)
+#x <- lapply(ug, \(i) {
+#  v <- g$variety[g$group==i]
+#  n <- length(v)
+#  n2 <- sum(is.na(v))
+#  v <- paste0(sort(unique(v)), collapse = "; ")
+#  v <- gsub("^; ", "", v)
+#  out <- paste0(c(n, v), collapse=", ")
+#  data.frame(group=i, n=n, lab=gsub(", $", "", out))
+#}) 
+#x <- do.call(rbind, x)
 
-i <- match(k, x$group)
-x <- x[i,]
+#i <- match(k, x$group)
+#x <- x[i,]
 #hc <- dendextend::set(hc, "labels", x$lab)
 #hc <- dendextend::set(hc, "labels_cex", .4)
 

@@ -14,7 +14,6 @@ setwd(path)
 
 ff <- list.files("input", pattern="SNP.csv$", recursive=TRUE, full=TRUE)
 markers <- matchpoint::marker_positions("")
-f = ff[4]
 filename = ""
 pars <- data.frame(
 	crop=c("Ri", "Er", "Co", "Mz", "Cp", "Ca"),
@@ -22,7 +21,8 @@ pars <- data.frame(
 	split=c(.05,  .05,   .05,  .15, .05,   .05)
 )
 
-ff = rev(ff)
+f = ff[2]
+
 
 for (f in ff) {
 	print(f)
@@ -31,9 +31,9 @@ for (f in ff) {
 	stopifnot(nrow(p) == 1)
 	snps <- matchpoint::read_dart(f)
 	genotypes <- gsub("SNP.csv$", "variety-info.csv", f) |> data.table::fread() |> data.frame()	
-	match_field <- c("sample", "target.id")[grepl("ETH", f)+1]
+	match_field <- c("sample", "targetID")[grepl("ETH", f)+1]
 
-	filename <- file.path(gsub("input", "output/IBS/refine", dirname(f)), paste0(snps$order, "_IBS_refine"))
+	filename <- file.path(gsub("input", "output/IBS/refine", dirname(f)), paste0(snps$order, "_refine_IBS"))
 
 	out <- matchpoint::refine_IBS(snps, genotypes, match_field=match_field, markers, ref_split=p$split, ref_lump=p$lump, filename=filename, threads=4, verbose=FALSE)
 }

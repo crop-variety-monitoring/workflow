@@ -12,17 +12,14 @@ if (this == "LAPTOP-IVSPBGCA") {
 
 setwd(path)
 ff <- list.files("input", pattern="_Counts.csv$", recursive=TRUE, full=TRUE)
-ff <- ff[!grepl("DEra2", ff)]
-
-#ff = rev(ff)
 
 for (f in ff) {
 	print(f)
-	match_field <- c("sample", "target.id")[grepl("ETH", f)+1]	
+	match_field <- c("sample", "targetID")[grepl("ETH", f)+1]	
 	snps <- matchpoint::read_dart(f)
-	fgeno <- gsub("input", "output/CDS/refine", gsub("_Counts.csv$", "_refine_CDS.xlsx", f))
-	genotypes <- readxl::read_excel(fgeno, sheet="genotypes", col_types="text") |> data.frame()
-	genotypes$reference <- as.logical(genotypes$reference)
+	fgeno <- gsub("input", "output/CDS/refine", f)
+	fgeno <- gsub("_Counts.csv$", "_refine_CDS_variety-info.csv", fgeno)
+	genotypes <- read.csv(fgeno)
 	filename <- file.path(gsub("input", "output/CDS/match/", dirname(f)), paste0(snps$order, "_match"))
 	
 	out <- matchpoint:::match_CDS(snps, genotypes, match_field=match_field, filename=filename)

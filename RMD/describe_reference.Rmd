@@ -54,14 +54,14 @@ stopifnot(length(fc) == 1)
 dirn <- dirname(fc)
 country <- substr(dirn, nchar(dirn)-2, nchar(dirn))
 
-match_field <- if (country == "Ethiopia") "target.id" else  "sample" 
+match_field <- if (country == "Ethiopia") "targetID" else  "sample" 
 
 #dartc <- matchpoint::read_dart(fc)
 
 inf <- read.csv(gsub("_Counts", "_variety-info", fc))
 inf <- inf[inf$reference,]
 
-fxl <- gsub("input", "output/IBS/refine", gsub("_Counts.csv", "_IBS_refine.xlsx", fc))
+fxl <- gsub("input", "output/IBS/refine", gsub("_Counts.csv", "_refine_IBS.xlsx", fc))
 dibs <- readxl::read_excel(fxl, "distance", .name_repair="minimal")
 newnms <- dibs[,1]
 dibs <- dibs[,-1] |> as.matrix()
@@ -286,18 +286,18 @@ out <- data.frame(
 After the cleaning suggested above, the median average IBS distance between samples of the same variety was r round(median(v$value), 1); r scores[1] for technical replicates and r scores[2] for biological replicates. 
 
 ```{r bplot, fig.width=8, fig.height=4}
-vv <- rbind(data.frame(id="before cleaning", v=near_same$value_old), data.frame(id="after cleaning", v=near_same$value_new))
-nn <- rbind(data.frame(id="before cleaning", v=near_oth_old$value), data.frame(id="after cleaning", v=near_oth_new$value))
+vv <- rbind(data.frame(id="original", v=near_same$value_old), data.frame(id="refined", v=near_same$value_new))
+nn <- rbind(data.frame(id="original", v=near_oth_old$value), data.frame(id="refined", v=near_oth_new$value))
 
 #nn <- matchpoint::nngb_dist(dst)$value
 qnn <- round(quantile(near_same$value_new, na.rm=TRUE), 3)
 noth <- near_oth_new$value
 
-layout(cbind(1,2), c(2,1.5))
-par(mar=c(4,6,3,3))
+#layout(cbind(1,2), c(2,1.5))
+par(mfrow=c(1,2), mar=c(4,6,3,3))
 boxplot(v~id, data=vv, ylab="Dissimilarity within varieties\n(IBS)", las=1, col=c("red", "blue"), xlab="", xpd=TRUE)
 
-boxplot(v ~ id, data=nn, ylab="Distance to nearest other variety\n(IBS)", las=1, cex=.5, col=c("red", "blue"))
+boxplot(v ~ id, data=nn, ylab="Distance to nearest other variety\n(IBS)", las=1, cex=.5, col=c("red", "blue"), xlab="")
 
 out$min_other_dist=qnn[1]
 out$q05_other_dist=quantile(near_oth_new$value, .05)

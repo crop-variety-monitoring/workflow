@@ -15,8 +15,6 @@ setwd(gitp)
 
 path <- "data-ETH/raw/dart/"; outpath= file.path(outp, "input/ETH")
 
-path <- "data-NGA/raw/dart/"; outpath= file.path(outp, "input/NGA")
-
 matchpoint:::prepare_dart("data-ETH/raw/dart/", file.path(outp, "input/ETH"))
 
 matchpoint:::prepare_dart("data-NGA/raw/dart/", file.path(outp, "input/NGA"))
