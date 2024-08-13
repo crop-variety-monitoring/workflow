@@ -11,7 +11,7 @@ editor_options:
 
 
 ```{r setup, include=FALSE}
-docache <- TRUE
+docache <- FALSE
 
 is_html <- knitr::is_html_output()
 knitr::opts_chunk$set(echo=is_html)
@@ -41,7 +41,8 @@ scrolltab <- function(data, caption, width="100%") {
 
 
 ```{r fileread, include=FALSE, cache=docache}
-ordnr <- "DMz23-8837_DMz23-8838"
+ordnr <- "DCas23-7954"
+#"DMz23-8837_DMz23-8838"
 #"DCas23-7954"
 #"DRi23-7825"
 
@@ -112,28 +113,28 @@ pref <- readxl::read_excel(fxl, "punity_refined") |> data.frame()
 near_same <- readxl::read_excel(fxl, "near_same") |> data.frame()
 near_oth_old <- readxl::read_excel(fxl, "near_other_old") |> data.frame()
 near_oth_new <- readxl::read_excel(fxl, "near_other_new") |> data.frame()
+pars <- readxl::read_excel(fxl, "parameters") |> data.frame()
+
 ```
 
 `r pdftxt`
 
 ### Introduction
 
-This document describes the reference samples for `r crop` in `r country` (order `r ordnr`) using IBS. There were `r sum(inf$reference)` samples `r ifelse(removed > 0, paste0("(after removing ", removed, " sample(s) for having more than 80% missing data)"), "")`, representing `r nvars` varieties. On average, there were 
-`r ndups` samples for each reference variety, `r techdups` samples from the same source ("inventory"; "technical duplicates") and `r biodups` samples from different sources ("biological duplicates").  
+This document describes the reference varieties for `r crop` in `r country` (order `r ordnr`) using IBS. There were `r sum(inf$reference)` samples `r ifelse(removed > 0, paste0("(after removing ", removed, " sample(s) for having more than 80% missing data)"), "")`, representing `r nvars` varieties. On average, there were `r ndups` samples for each reference variety, `r techdups` samples from the same source ("inventory"; "technical duplicates") and `r biodups` samples from different sources ("biological duplicates").  
 
 
 ### Identification problems
 
 There is a number of problems that can be encountered in a reference set. 
 
-1) Some varieties cannot be clearly separated with the SNP data. These were combined into a single variety, with the original names separated by ` # `. Combinations like `NERICA 1 # NERICA 2 # NERICA 3` are abbreviated to `NERICA 1*2*3` 
+1) Not all varieties can be clearly separated with the SNP data. These were combined into a single variety, with the original names separated by ` # `. Combinations like `NERICA 1 # NERICA 2 # NERICA 3` are abbreviated to `NERICA 1*2*3` 
 
-2) Some replicates of a variety are clearly in the wrong group. These were renamed to the group the belong to (the renamed references get an `*` appended to their name); 
+2) Replicates of a variety may appear to be mislabeled as they are much more similar to another variety. These were renamed to the group the belong to (the renamed references get an `*` appended to their name); 
 
-3) There can be multiple separate groups for the same variety that are genetically very distant. These are identified by appended labels `_a`, `_b`, `_c` etc. These suffixes are dropped if they are combined as under point 1. 
+3) There can be multiple separate groups for the same variety that are genetically very distant. These are identified by appending labels `_a`, `_b`, `_c` etc. These suffixes are dropped if they are combined as under point 1. 
 
-Below is a dendrogram based on the IBS distance and complete linkage clustering. The unit distance is the number of mutations that separate each reference. The labels are formatted as follows: `variety (sample_ID / inventory_ID) [n IBS matches]`. 
-The matches and inventory_ID are omitted if there were none.
+Below is a dendrogram based on the IBS distance and complete linkage clustering. The unit distance is the number of mutations that separate each reference. The labels are formatted as follows: `variety (sample_ID / inventory_ID)`. 
 
 The blue and red lines show the cut offs used when making new groups based on the distance matrix (not on this particular dendrogram representation). If a variety has sub-groups that are further apart than the cut-off indicated by the blue line, they are split; unless they are nearest neighbors to each other, in which case they are kept together. Varieties that have distance that is lower than the distance indicated by the red line are lumped together.
 
@@ -198,10 +199,10 @@ text(cbind(pd, 1:length(var2)), labels=var2, col=cols2, pos=4, xpd=TRUE, cex=0.5
 text(0, length(var2)+2, labels="Original names", pos=4, xpd=TRUE, cex=1)
 text(pd, length(var2)+2, labels="Revised names", pos=4, xpd=TRUE, cex=1)
 
-#lines(cbind(.1, c(0, length(variety))), col=rgb(1,0,0,0.5), lwd=1)
-#text(splum$lump, 0, labels=round(splum$lump), adj=0, xpd=TRUE, cex=.5, col="red")
-#lines(cbind(splum$split, c(0, length(variety))), col=rgb(0,0,1,0.5), lwd=2)
-#text(splum$split, 0, labels=round(splum$split), adj=1, xpd=TRUE, cex=.5, col="blue")
+lines(cbind(.1, c(0, length(variety))), col=rgb(1,0,0,0.5), lwd=1)
+text(pars$lump[1], 0, labels=round(pars$lump[1]), adj=0, xpd=TRUE, cex=.5, col="red")
+lines(cbind(pars$split[1], c(0, length(variety))), col=rgb(0,0,1,0.5), lwd=2)
+text(pars$split[1], 0, labels=round(pars$split), adj=1, xpd=TRUE, cex=.5, col="blue")
 
 
 #refs <- intersect(dcn, colnames(dibs))

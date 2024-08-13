@@ -59,7 +59,8 @@ for (method in c("IBS", "CDS")) {
 		writeLines(rmd, frmd)
 		outf <- paste0(ords$country[i], "_", ords$crop[i], "_results_", method)
 		renderRMD(onlyhtml)
-		print(paste(frmd, "\n"))
-
+		print(frmd); print("")
 	}
+
 }
+
